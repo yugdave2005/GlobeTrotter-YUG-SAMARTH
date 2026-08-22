@@ -1,32 +1,51 @@
 # 🌍 GlobeTrotter — Smart Travel Itinerary Planner
 
-> **Plan trips, build itineraries, track budgets, and share your travel plans — powered by a modern full-stack architecture with Docker containerization.**
+<p align="center">
+  <strong>Plan trips · Build itineraries · Track budgets · Share with friends</strong>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white" alt="React 19" />
+  <img src="https://img.shields.io/badge/Express-5-000000?logo=express&logoColor=white" alt="Express 5" />
+  <img src="https://img.shields.io/badge/PostgreSQL-15-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/Prisma-7-2D3748?logo=prisma&logoColor=white" alt="Prisma" />
+  <img src="https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white" alt="Docker" />
+  <img src="https://img.shields.io/badge/Socket.IO-4-010101?logo=socket.io&logoColor=white" alt="Socket.IO" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white" alt="Tailwind" />
+</p>
 
 ---
 
 ## 📌 Table of Contents
 
-- [About the Project](#about-the-project)
+- [About](#about)
 - [Features](#features)
 - [Architecture](#architecture)
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
 - [Database Schema](#database-schema)
-- [API Endpoints](#api-endpoints)
+- [API Reference](#api-reference)
 - [Getting Started](#getting-started)
 - [Environment Variables](#environment-variables)
-- [Screens & UI](#screens--ui)
+- [Screenshots](#screenshots)
 - [Design Decisions](#design-decisions)
 - [Team](#team)
 - [License](#license)
 
 ---
 
-## 📖 About the Project
+## 📖 About
 
-**GlobeTrotter** is a full-stack travel itinerary planning application built during an **8-hour hackathon** by a **2-person team**. Users can sign up (email or Google OAuth), create trips, add cities as stops, browse and attach activities, log expenses, view budget breakdowns, and share itineraries publicly via unique links.
+**GlobeTrotter** is a full-stack travel itinerary planning application built during an **8-hour hackathon** by a **2-person team**. It lets users:
 
-The backend is a **monolithic Express API** backed by **Prisma ORM** and **PostgreSQL**, containerized with **Docker Compose**. The frontend is a **React 19 SPA** built with **Vite** and **Tailwind CSS v4**.
+- Sign up via **email/password** or **Google OAuth**
+- Create and manage multi-city trips with ordered stops
+- Browse a curated catalog of **cities and activities**
+- Attach activities to stops and build day-by-day itineraries
+- Log expenses and view **budget breakdowns** by category
+- Set **travel preferences** (style, pace, budget, companions)
+- **Share trips publicly** via unique links
+- Get **real-time updates** via WebSockets when collaborating on trips
 
 ---
 
@@ -34,55 +53,81 @@ The backend is a **monolithic Express API** backed by **Prisma ORM** and **Postg
 
 | Feature | Description |
 |---|---|
-| 🔐 **Authentication** | Email/password signup & login, Google OAuth, OTP-based password reset |
-| 🗺️ **Trip Management** | Create, view, and manage personal trips with dates and descriptions |
-| 🏙️ **City & Activity Catalog** | Browse a curated, seeded list of cities (with regions & popularity scores) and activities |
-| 📋 **Itinerary Builder** | Add cities as stops to a trip, attach activities to each stop |
-| 💰 **Budget & Expenses** | Log expenses by category (Transport, Stay, Meals, Misc) and view trip budget breakdowns |
-| 📌 **Saved Destinations** | Save favorite cities for quick access |
-| 🔗 **Public Sharing** | Generate a unique share slug for read-only public trip viewing |
-| 🐳 **Dockerized** | One-command PostgreSQL setup via Docker Compose |
+| 🔐 **Multi-Auth** | Email/password, Google OAuth, OTP-based password reset via email |
+| 🗺️ **Trip Management** | Create, view, and manage trips with dates, descriptions, and cover photos |
+| 🏙️ **City & Activity Catalog** | Browse seeded cities (with region, cost index, popularity) and activities (4 categories) |
+| 📋 **Itinerary Builder** | Add ordered city stops, attach activities with scheduled times and custom costs |
+| 💰 **Budget & Expenses** | Log expenses by category (Transport, Stay, Meals, Misc), view per-trip breakdowns |
+| 🎯 **Travel Preferences** | Set interests, travel style, pace, budget range, and companion type |
+| 📌 **Saved Destinations** | Bookmark favorite cities for quick access |
+| 🔗 **Public Sharing** | Generate unique share slugs for read-only public trip pages |
+| ⚡ **Real-Time Updates** | Socket.IO integration for live trip collaboration |
+| 🔔 **Toast Notifications** | React Hot Toast for elegant feedback on all actions |
+| 🎨 **Animated UI** | Framer Motion animations, Lucide icons, responsive dashboard layout |
 
 ---
 
 ## 🏗️ Architecture
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                   Docker Compose                    │
-│  ┌───────────────────────────────────────────────┐  │
-│  │  postgres (PostgreSQL 15-Alpine)  Port: 5433  │  │
-│  └────────────────────┬──────────────────────────┘  │
-└───────────────────────┼─────────────────────────────┘
-                        │
-        ┌───────────────┴───────────────┐
-        │                               │
-┌───────┴────────┐             ┌────────┴────────┐
-│    Backend     │             │    Frontend     │
-│  Express API   │◄───────────│  React + Vite   │
-│  (Monolith)    │   Axios    │  Tailwind CSS   │
-│  Port: 3000    │             │  Port: 5173     │
-│  Prisma ORM    │             │                 │
-└────────────────┘             └─────────────────┘
+                    ┌─────────────────────────────┐
+                    │      Frontend (React)       │
+                    │      localhost:5173          │
+                    │  React 19 · Vite 8 · TW v4  │
+                    └──────┬──────────┬───────────┘
+                           │ Axios    │ Socket.IO
+                           │ REST     │ WebSocket
+                    ┌──────▼──────────▼───────────┐
+                    │      Backend (Express)       │
+                    │      localhost:5000          │
+                    │  Express 5 · Prisma 7 · JWT  │
+                    │  /api/auth · /api/core        │
+                    └──────────────┬───────────────┘
+                                   │ Prisma Client
+                    ┌──────────────▼───────────────┐
+                    │    PostgreSQL 15 (Docker)     │
+                    │    localhost:5433             │
+                    │    Volume: postgres_data      │
+                    └──────────────────────────────┘
 ```
 
-- **Monolithic backend** — single Express server with logically separated route modules (`/api/auth/*` and `/api/core/*`)
-- **PostgreSQL 15** containerized via Docker Compose with health checks and persistent volume
-- **React 19 SPA** communicating with the backend via Axios
+**Key architectural choices:**
+- **Monolithic backend** with logically separated route modules (`/api/auth` and `/api/core`)
+- **Single PostgreSQL instance** containerized via Docker Compose with health checks
+- **Socket.IO** server layered on top of the Express HTTP server for real-time features
+- **Axios interceptor** on the frontend automatically attaches JWT to all authenticated requests
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Layer | Technology |
-|---|---|
-| **Frontend** | React 19, Vite 8, Tailwind CSS v4, React Router v7, Axios |
-| **Backend** | Node.js, Express 5, ES Modules |
-| **Database / ORM** | PostgreSQL 15 (Alpine), Prisma 7 |
-| **Authentication** | JWT, bcrypt, Google Auth Library, OTP (otp-generator + Nodemailer) |
-| **Containerization** | Docker Compose |
-| **Linting** | OxLint (frontend) |
-| **Version Control** | Git |
+### Backend
+
+| Technology | Version | Purpose |
+|---|---|---|
+| Node.js + Express | 5.x | REST API server |
+| Prisma | 7.x | ORM, migrations, seeding |
+| PostgreSQL | 15 Alpine | Relational database |
+| Socket.IO | 4.x | Real-time WebSocket communication |
+| JWT + bcrypt | — | Authentication & password hashing |
+| Google Auth Library | 11.x | Google OAuth token verification |
+| Nodemailer + otp-generator | — | Email-based OTP password reset |
+| Docker Compose | — | Database containerization |
+
+### Frontend
+
+| Technology | Version | Purpose |
+|---|---|---|
+| React | 19.x | UI framework |
+| Vite | 8.x | Build tool & dev server |
+| Tailwind CSS | 4.x | Utility-first styling |
+| React Router | 7.x | Client-side routing |
+| Axios | 1.x | HTTP client with interceptors |
+| Framer Motion | 13.x | Animations & transitions |
+| Lucide React | 1.x | Icon library |
+| React Hot Toast | 2.x | Toast notifications |
+| Socket.IO Client | 4.x | Real-time WebSocket client |
+| @react-oauth/google | 0.13 | Google sign-in button |
 
 ---
 
@@ -90,56 +135,75 @@ The backend is a **monolithic Express API** backed by **Prisma ORM** and **Postg
 
 ```
 GlobeTrotter/
+│
 ├── backend/
 │   ├── prisma/
-│   │   ├── schema.prisma          # Full data model (8 models, 3 enums)
-│   │   ├── seed.js                # Seed script for cities & activities
-│   │   └── migrations/            # Prisma migration history
+│   │   ├── schema.prisma              # 9 models, 3 enums
+│   │   ├── seed.js                    # City & activity seed data
+│   │   └── migrations/               # Migration history
 │   ├── src/
-│   │   ├── app.js                 # Express app setup (CORS, JSON, routes)
-│   │   ├── server.js              # Server entry point
+│   │   ├── app.js                     # Express setup (CORS, JSON, routes)
+│   │   ├── server.js                  # HTTP server + Socket.IO init
 │   │   ├── config/
-│   │   │   └── db.js              # Database configuration
+│   │   │   └── db.js                  # Database configuration
 │   │   ├── controllers/
-│   │   │   ├── auth.controller.js     # Register, login, Google OAuth, OTP reset
+│   │   │   ├── auth.controller.js     # Register, login, Google OAuth, OTP, profile update
 │   │   │   ├── trip.controller.js     # Trip CRUD, stops, stop-activities, public share
-│   │   │   ├── city.controller.js     # City listing & search
+│   │   │   ├── city.controller.js     # City listing & details
 │   │   │   ├── activity.controller.js # Activity listing
 │   │   │   └── budget.controller.js   # Expense logging & budget breakdown
 │   │   ├── middlewares/
-│   │   │   └── auth.middleware.js     # JWT verification middleware
+│   │   │   └── auth.middleware.js     # JWT verification
 │   │   ├── routes/
-│   │   │   ├── index.js               # Route aggregator (/api/auth, /api/core)
-│   │   │   ├── auth.route.js          # Auth endpoints
-│   │   │   └── core.route.js          # Core business endpoints
+│   │   │   ├── index.js              # Route aggregator → /api/auth + /api/core
+│   │   │   ├── auth.route.js         # 7 auth endpoints
+│   │   │   └── core.route.js         # 11 core business endpoints
 │   │   └── utils/
-│   │       ├── jwt.js                 # JWT sign/verify helpers
 │   │       ├── prisma.js             # Prisma client singleton
+│   │       ├── jwt.js                # JWT sign/verify helpers
+│   │       ├── socket.js             # Socket.IO server setup & room management
 │   │       ├── email.js              # Nodemailer transporter
 │   │       ├── otpUtils.js           # OTP generation
 │   │       └── googleAuthUtils.js    # Google token verification
-│   ├── docker-compose.yml         # PostgreSQL container definition
+│   ├── docker-compose.yml            # PostgreSQL container
 │   └── package.json
 │
 ├── frontend/
-│   ├── public/                    # Static assets (favicon, icons)
+│   ├── public/                        # Static assets (favicon, icons)
 │   ├── src/
-│   │   ├── main.jsx               # App entry point
-│   │   ├── App.jsx                # Root component with routing
-│   │   ├── App.css / index.css    # Global styles
-│   │   ├── assets/                # Images (hero.png, etc.)
-│   │   └── pages/
-│   │       ├── Auth/              # Login, signup, password reset
-│   │       ├── Dashboard/         # Trip listing / home
-│   │       ├── TripBuilder/       # Itinerary builder
-│   │       ├── Budget/            # Expense tracking & breakdown
-│   │       └── Profile/           # User profile & settings
+│   │   ├── main.jsx                   # App entry + providers (Router, Google OAuth)
+│   │   ├── App.jsx                    # Root component (routes, SocketProvider, Toaster)
+│   │   ├── App.css / index.css        # Global styles
+│   │   ├── assets/                    # Images (hero.png, etc.)
+│   │   ├── components/
+│   │   │   ├── AnimatedCard.jsx       # Framer Motion animated card wrapper
+│   │   │   ├── SettingsModal.jsx      # User settings modal
+│   │   │   └── layout/
+│   │   │       ├── LandingLayout.jsx  # Public pages layout
+│   │   │       ├── DashboardLayout.jsx# Auth-protected dashboard shell
+│   │   │       ├── Sidebar.jsx        # Navigation sidebar
+│   │   │       └── Topbar.jsx         # Top navigation bar
+│   │   ├── context/
+│   │   │   └── SocketContext.jsx      # Socket.IO React context provider
+│   │   ├── pages/
+│   │   │   ├── Landing.jsx            # Landing/home page
+│   │   │   ├── DashboardHome.jsx      # Dashboard overview
+│   │   │   ├── Auth/
+│   │   │   │   ├── Login.jsx          # Login form
+│   │   │   │   ├── Register.jsx       # Registration with travel preferences
+│   │   │   │   ├── ForgotPasswordModal.jsx  # OTP password reset flow
+│   │   │   │   └── routes.jsx         # Auth route definitions
+│   │   │   ├── Budget/               # Budget tracking (in progress)
+│   │   │   ├── TripBuilder/          # Itinerary builder (in progress)
+│   │   │   └── Profile/              # User profile (in progress)
+│   │   └── utils/
+│   │       └── api.js                 # Axios instance with JWT interceptor
 │   ├── vite.config.js
 │   └── package.json
 │
-├── .agents/                       # AI agent configurations
+├── .agents/                           # AI agent configurations
 ├── GlobeTrotter_Implementation_Plan.md
-├── GlobeTrotter.pdf               # Original project brief
+├── GlobeTrotter.pdf                   # Original project brief
 └── README.md
 ```
 
@@ -147,20 +211,21 @@ GlobeTrotter/
 
 ## 🗃️ Database Schema
 
-The Prisma schema defines **8 models** and **3 enums**:
+The Prisma schema defines **9 models** and **3 enums**:
 
 ### Models
 
 | Model | Key Fields | Description |
 |---|---|---|
-| **User** | `email`, `passwordHash`, `name`, `photoUrl`, `googleId`, `resetOtp`, `role` | Supports email & Google OAuth, OTP password reset, admin roles |
-| **City** | `name`, `country`, `region`, `costIndex`, `popularityScore`, `imageUrl` | Seeded catalog of travel destinations |
-| **Activity** | `cityId`, `name`, `category`, `cost`, `durationMinutes`, `description` | City-specific activities (Sightseeing, Food, Adventure, Relaxation) |
-| **Trip** | `userId`, `name`, `startDate`, `endDate`, `isPublic`, `shareSlug` | User-created trips with optional public sharing |
+| **User** | `email`, `passwordHash`, `name`, `photoUrl`, `googleId`, `resetOtp`, `role`, `languagePreference` | Email & Google OAuth, admin roles, OTP reset |
+| **TravelPreference** | `userId`, `interests[]`, `travelStyle`, `travelPace`, `budget`, `companions`, `priorities[]` | User's personalized travel preferences |
+| **City** | `name`, `country`, `region`, `costIndex`, `popularityScore`, `imageUrl` | Seeded destination catalog |
+| **Activity** | `cityId`, `name`, `category`, `cost`, `durationMinutes`, `description`, `imageUrl` | City-specific activities |
+| **Trip** | `userId`, `name`, `startDate`, `endDate`, `coverPhotoUrl`, `isPublic`, `shareSlug` | User trips with public sharing |
 | **TripStop** | `tripId`, `cityId`, `arrivalDate`, `departureDate`, `sortOrder` | Ordered city stops within a trip |
-| **StopActivity** | `tripStopId`, `activityId`, `scheduledTime`, `customCost` | Activities attached to a specific stop |
-| **TripExpense** | `tripId`, `tripStopId`, `category`, `amount`, `description` | Logged expenses (Transport, Stay, Meals, Misc) |
-| **SavedDestination** | `userId`, `cityId` | User's bookmarked cities |
+| **StopActivity** | `tripStopId`, `activityId`, `scheduledTime`, `customCost` | Activities attached to stops |
+| **TripExpense** | `tripId`, `tripStopId`, `category`, `amount`, `description` | Logged expenses per trip/stop |
+| **SavedDestination** | `userId`, `cityId` | Bookmarked cities |
 
 ### Enums
 
@@ -170,38 +235,72 @@ The Prisma schema defines **8 models** and **3 enums**:
 | `ActivityCategory` | `SIGHTSEEING`, `FOOD`, `ADVENTURE`, `RELAXATION` |
 | `ExpenseCategory` | `TRANSPORT`, `STAY`, `MEALS`, `MISC` |
 
+### Entity Relationship Diagram
+
+```mermaid
+erDiagram
+    User ||--o| TravelPreference : has
+    User ||--o{ Trip : creates
+    User ||--o{ SavedDestination : saves
+    City ||--o{ Activity : offers
+    City ||--o{ TripStop : visited_in
+    City ||--o{ SavedDestination : saved_by
+    Trip ||--o{ TripStop : contains
+    Trip ||--o{ TripExpense : tracks
+    TripStop ||--o{ StopActivity : schedules
+    TripStop ||--o{ TripExpense : incurs
+    Activity ||--o{ StopActivity : booked_as
+```
+
 ---
 
-## 🔌 API Endpoints
+## 🔌 API Reference
 
-All API routes are mounted under `/api`.
+Base URL: `http://localhost:5000/api`
 
-### Auth Routes — `/api/auth`
+### Auth — `/api/auth`
 
 | Method | Endpoint | Auth | Description |
 |---|---|---|---|
-| `POST` | `/register` | ❌ | Register with email & password |
-| `POST` | `/login` | ❌ | Login and receive JWT |
+| `POST` | `/register` | ❌ | Register with email, password, name & travel preferences |
+| `POST` | `/login` | ❌ | Login → JWT token |
 | `POST` | `/google` | ❌ | Google OAuth authentication |
-| `POST` | `/forgot-password` | ❌ | Request OTP for password reset |
+| `POST` | `/forgot-password` | ❌ | Send OTP to email |
 | `POST` | `/reset-password` | ❌ | Reset password with OTP |
 | `GET` | `/me` | ✅ | Get current user profile |
+| `PUT` | `/profile` | ✅ | Update profile (name, photo, language, travel preferences) |
 
-### Core Routes — `/api/core`
+### Core — `/api/core`
 
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| `GET` | `/cities` | ❌ | List/search all cities |
-| `GET` | `/cities/:id` | ❌ | Get city details |
-| `GET` | `/activities` | ❌ | List activities (filterable) |
-| `GET` | `/public/trips/:shareSlug` | ❌ | View a shared trip |
-| `POST` | `/trips` | ✅ | Create a new trip |
-| `GET` | `/trips` | ✅ | List current user's trips |
-| `GET` | `/trips/:id` | ✅ | Get trip with stops & activities |
-| `POST` | `/trips/:id/stops` | ✅ | Add a city stop to a trip |
-| `POST` | `/trips/:id/stops/:stopId/activities` | ✅ | Add an activity to a stop |
-| `POST` | `/trips/:id/expenses` | ✅ | Log an expense |
-| `GET` | `/trips/:id/budget` | ✅ | Get trip budget breakdown |
+#### Public Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/cities` | List all cities (searchable) |
+| `GET` | `/cities/:id` | Get city details with activities |
+| `GET` | `/activities` | List all activities (filterable) |
+| `GET` | `/public/trips/:shareSlug` | View a publicly shared trip |
+
+#### Protected Endpoints (JWT required)
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/trips` | Create a new trip |
+| `GET` | `/trips` | List current user's trips |
+| `GET` | `/trips/:id` | Get trip with all stops, activities & expenses |
+| `POST` | `/trips/:id/stops` | Add a city stop to a trip |
+| `POST` | `/trips/:id/stops/:stopId/activities` | Attach an activity to a stop |
+| `POST` | `/trips/:id/expenses` | Log an expense |
+| `GET` | `/trips/:id/budget` | Get budget breakdown by category |
+
+### WebSocket Events
+
+| Event | Direction | Description |
+|---|---|---|
+| `join_trip` | Client → Server | Join a trip room for real-time updates |
+| `leave_trip` | Client → Server | Leave a trip room |
+| `connection` | Server → Client | New client connected |
+| `disconnect` | Server → Client | Client disconnected |
 
 ---
 
@@ -209,9 +308,10 @@ All API routes are mounted under `/api`.
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) (v18+)
+- [Node.js](https://nodejs.org/) v18+
 - [Docker](https://www.docker.com/) & Docker Compose
 - [Git](https://git-scm.com/)
+- A [Google Cloud](https://console.cloud.google.com/) project (for OAuth — optional)
 
 ### 1. Clone the Repository
 
@@ -227,7 +327,7 @@ cd backend
 docker compose up -d
 ```
 
-This starts PostgreSQL 15 on **port 5433** with persistent storage.
+> PostgreSQL 15 starts on **port 5433** with persistent volume `postgres_data`.
 
 ### 3. Set Up the Backend
 
@@ -235,17 +335,19 @@ This starts PostgreSQL 15 on **port 5433** with persistent storage.
 # Install dependencies
 npm install
 
-# Create .env file (see Environment Variables section)
+# Create .env file (see Environment Variables section below)
 
 # Run Prisma migrations
 npx prisma migrate deploy
 
-# Seed the database
+# Seed the database with cities & activities
 npx prisma db seed
 
-# Start the dev server
+# Start the dev server (with hot-reload)
 npm run dev
 ```
+
+> Backend runs on **http://localhost:5000** with Socket.IO on the same port.
 
 ### 4. Set Up the Frontend
 
@@ -259,13 +361,16 @@ npm install
 npm run dev
 ```
 
-### 5. Open the App
+> Frontend runs on **http://localhost:5173**.
+
+### 5. Quick Links
 
 | Service | URL |
 |---|---|
-| Frontend | http://localhost:5173 |
-| Backend API | http://localhost:3000 |
-| Health Check | http://localhost:3000/health |
+| 🌐 Frontend | http://localhost:5173 |
+| 🔧 Backend API | http://localhost:5000/api |
+| ❤️ Health Check | http://localhost:5000/health |
+| 🐘 PostgreSQL | localhost:5433 |
 
 ---
 
@@ -274,33 +379,43 @@ npm run dev
 Create a `.env` file in the `backend/` directory:
 
 ```env
-# Database
+# Server
+PORT=5000
+
+# Database (matches docker-compose.yml)
 DATABASE_URL="postgresql://postgres:supersecretpassword@localhost:5433/globetrotter"
 
 # JWT
-JWT_SECRET="your-jwt-secret-key"
+JWT_SECRET="your-strong-jwt-secret-key"
 
 # Google OAuth
-GOOGLE_CLIENT_ID="your-google-client-id"
+GOOGLE_CLIENT_ID="your-google-client-id.apps.googleusercontent.com"
 
 # Email (for OTP password reset)
 EMAIL_HOST="smtp.gmail.com"
 EMAIL_PORT=587
 EMAIL_USER="your-email@gmail.com"
-EMAIL_PASS="your-app-password"
+EMAIL_PASS="your-gmail-app-password"
 ```
 
 ---
 
-## 🖥️ Screens & UI
+## 🖥️ Screenshots
 
-| Page | Description |
-|---|---|
-| **Auth** | Login, signup, Google OAuth, forgot/reset password |
-| **Dashboard** | Overview of user's trips |
-| **Trip Builder** | Core feature — add cities as stops, attach activities, build itineraries |
-| **Budget** | Log expenses and view per-trip budget breakdowns by category |
-| **Profile** | User profile and settings |
+> *Coming soon — the frontend is actively being built!*
+
+### Available Pages
+
+| Page | Status | Description |
+|---|---|---|
+| **Landing** | ✅ Built | Hero section, feature highlights, call-to-action |
+| **Login** | ✅ Built | Email/password + Google OAuth sign-in |
+| **Register** | ✅ Built | Multi-step registration with travel preferences |
+| **Forgot Password** | ✅ Built | OTP-based password reset modal |
+| **Dashboard** | ✅ Built | Dashboard home with sidebar navigation |
+| **Trip Builder** | 🚧 In Progress | Itinerary creation and management |
+| **Budget** | 🚧 In Progress | Expense tracking and breakdown charts |
+| **Profile** | 🚧 In Progress | User profile and settings |
 
 ---
 
@@ -308,33 +423,36 @@ EMAIL_PASS="your-app-password"
 
 | Decision | Rationale |
 |---|---|
-| **Monolithic backend** with route-level separation | Faster to develop in 8hrs while maintaining clean code boundaries (`/auth` vs `/core`) |
-| **Prisma ORM** | Type-safe queries, auto-generated migrations, built-in seeding |
-| **Google OAuth + OTP reset** | Production-grade auth without heavy infrastructure |
-| **Docker for DB only** | PostgreSQL container with health checks; backend/frontend run natively for faster dev iteration |
-| **Tailwind CSS v4** | Utility-first styling with latest features and performance |
-| **Seeded city/activity data** | Realistic demo without needing an admin panel |
+| **Monolithic backend** with route-level separation | Faster development in 8hrs; clean boundaries via `/api/auth` and `/api/core` modules |
+| **Prisma ORM** | Type-safe queries, auto-generated migrations, declarative schema, built-in seeding |
+| **Socket.IO for real-time** | Enables live trip collaboration without polling; room-based architecture per trip |
+| **Google OAuth + OTP reset** | Production-grade auth without heavy infrastructure (no Redis sessions needed) |
+| **Docker for DB only** | PostgreSQL containerized with health checks; backend/frontend run natively for faster dev iteration |
+| **Axios interceptors** | Automatically attaches JWT to all requests; centralized API config |
+| **Framer Motion** | Smooth page transitions and card animations for a polished feel |
+| **Tailwind CSS v4** | Latest utility-first CSS with better performance and native nesting |
+| **Seeded catalog data** | Realistic demo experience without needing an admin panel |
 
 ---
 
 ## 👥 Team
 
-| Member | Role |
-|---|---|
-| **Yug Dave** | Full-Stack Development |
-| **Samarth** | Full-Stack Development |
+| Member | GitHub | Role |
+|---|---|---|
+| **Yug Dave** | [@yugdave2005](https://github.com/yugdave2005) | Full-Stack Development |
+| **Samarth** | — | Full-Stack Development |
 
-### Git Strategy
+### Git Workflow
 
-- Trunk-based — single `main` branch
-- Regular commits & pushes
-- Clear `MVP DEMO READY` checkpoint
+- **Trunk-based** — single `main` branch for rapid iteration
+- Regular commits & pushes after each feature
+- Clear `MVP DEMO READY` checkpoint for demo readiness
 
 ---
 
 ## 📄 License
 
-This project was built for a hackathon/academic submission. Feel free to fork and extend!
+This project was built for a hackathon / academic submission. Feel free to fork and extend!
 
 ---
 
