@@ -208,12 +208,23 @@ export const SmartItineraryPlannerModal = ({ isOpen, onClose, onItineraryCreated
         
         if (matchedCity) {
           try {
-            await api.post(`/core/trips/${createdTrip.id}/stops`, {
+            const { data: stopData } = await api.post(`/core/trips/${createdTrip.id}/stops`, {
               cityId: matchedCity.id,
               arrivalDate: startDate,
               departureDate: endDate,
               sortOrder: i + 1
             });
+
+            // Automatically attach recommended activities for this stop
+            if (stopData?.id && stopItem.activities && stopItem.activities.length > 0) {
+              for (const act of stopItem.activities) {
+                await api.post(`/core/trips/${createdTrip.id}/stops/${stopData.id}/activities`, {
+                  name: act.name,
+                  category: act.category,
+                  customCost: act.cost
+                }).catch(() => {});
+              }
+            }
           } catch (e) {
             console.log('Stop addition handled');
           }
