@@ -9,6 +9,43 @@ import {
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
 
+// Curated destination pricing benchmarks in INR (₹)
+const CITY_PRICE_PROFILES = {
+  jaipur: { daily: '₹1,500', range: '₹1,200 – ₹2,800', avgTrip: '₹18,000', badge: 'Budget', activitiesCount: 14 },
+  goa: { daily: '₹2,500', range: '₹2,000 – ₹4,500', avgTrip: '₹28,000', badge: 'Moderate', activitiesCount: 22 },
+  kochi: { daily: '₹2,000', range: '₹1,500 – ₹3,800', avgTrip: '₹24,000', badge: 'Moderate', activitiesCount: 16 },
+  kerala: { daily: '₹2,200', range: '₹1,800 – ₹4,200', avgTrip: '₹26,000', badge: 'Moderate', activitiesCount: 18 },
+  munnar: { daily: '₹1,800', range: '₹1,400 – ₹3,200', avgTrip: '₹20,000', badge: 'Budget', activitiesCount: 12 },
+  alleppey: { daily: '₹2,800', range: '₹2,200 – ₹5,000', avgTrip: '₹32,000', badge: 'Moderate', activitiesCount: 15 },
+  manali: { daily: '₹2,100', range: '₹1,600 – ₹3,800', avgTrip: '₹25,000', badge: 'Moderate', activitiesCount: 16 },
+  udaipur: { daily: '₹2,200', range: '₹1,800 – ₹4,000', avgTrip: '₹26,000', badge: 'Moderate', activitiesCount: 15 },
+  varanasi: { daily: '₹1,200', range: '₹900 – ₹2,200', avgTrip: '₹14,000', badge: 'Budget', activitiesCount: 11 },
+  paris: { daily: '₹12,500', range: '₹9,500 – ₹18,000', avgTrip: '₹1,40,000', badge: 'Luxury', activitiesCount: 35 },
+  tokyo: { daily: '₹10,800', range: '₹8,000 – ₹16,500', avgTrip: '₹1,25,000', badge: 'Luxury', activitiesCount: 28 },
+  rome: { daily: '₹9,200', range: '₹7,000 – ₹14,000', avgTrip: '₹1,10,000', badge: 'Luxury', activitiesCount: 26 },
+  barcelona: { daily: '₹8,500', range: '₹6,500 – ₹13,000', avgTrip: '₹95,000', badge: 'Premium', activitiesCount: 24 },
+  amsterdam: { daily: '₹11,000', range: '₹8,500 – ₹17,000', avgTrip: '₹1,30,000', badge: 'Luxury', activitiesCount: 21 },
+  kyoto: { daily: '₹9,500', range: '₹7,200 – ₹15,000', avgTrip: '₹1,15,000', badge: 'Luxury', activitiesCount: 20 },
+  osaka: { daily: '₹8,800', range: '₹6,800 – ₹14,000', avgTrip: '₹1,05,000', badge: 'Luxury', activitiesCount: 19 },
+  mumbai: { daily: '₹3,000', range: '₹2,200 – ₹5,500', avgTrip: '₹35,000', badge: 'Moderate', activitiesCount: 25 },
+  delhi: { daily: '₹2,500', range: '₹1,800 – ₹4,800', avgTrip: '₹28,000', badge: 'Moderate', activitiesCount: 24 },
+  bangalore: { daily: '₹2,600', range: '₹1,900 – ₹5,000', avgTrip: '₹30,000', badge: 'Moderate', activitiesCount: 18 }
+};
+
+function getCityPricing(city) {
+  const name = (city.name || '').toLowerCase();
+  for (const [key, profile] of Object.entries(CITY_PRICE_PROFILES)) {
+    if (name.includes(key)) {
+      return profile;
+    }
+  }
+  const idx = city.costIndex || 2;
+  if (idx <= 1) return { daily: '₹1,500', range: '₹1,200 – ₹2,500', avgTrip: '₹18,000', badge: 'Budget', activitiesCount: 12 };
+  if (idx === 2) return { daily: '₹2,800', range: '₹2,200 – ₹4,500', avgTrip: '₹32,000', badge: 'Moderate', activitiesCount: 16 };
+  if (idx === 3) return { daily: '₹6,500', range: '₹5,000 – ₹9,500', avgTrip: '₹75,000', badge: 'Premium', activitiesCount: 20 };
+  return { daily: '₹11,500', range: '₹9,000 – ₹18,000', avgTrip: '₹1,35,000', badge: 'Luxury', activitiesCount: 25 };
+}
+
 export default function Discover() {
   const navigate = useNavigate();
   const [cities, setCities] = useState([]);
@@ -76,27 +113,25 @@ export default function Discover() {
       let targetTripId = selectedTripId;
 
       if (isCreatingNewTrip || !targetTripId) {
-        // 1. Create new trip
-        const { data: newTrip } = await api.post('/core/trips', {
-          name: newTripTitle || `${cityToAdd.name} Tour ✈️`,
-          description: `Custom vacation itinerary exploring ${cityToAdd.name}, ${cityToAdd.country}.`,
-          startDate: new Date().toISOString().split('T')[0],
-          endDate: new Date(Date.now() + 6 * 86400000).toISOString().split('T')[0],
-          coverPhotoUrl: cityToAdd.imageUrl,
-          budget: Number(newTripBudget) || 50000
+        const createRes = await api.post('/core/trips', {
+          name: newTripTitle || `${cityToAdd.name} Trip`,
+          startDate: new Date().toISOString(),
+          endDate: new Date(Date.now() + 5 * 86400000).toISOString(),
+          budget: Number(newTripBudget) || 50000,
+          coverPhotoUrl: cityToAdd.imageUrl
         });
-        targetTripId = newTrip.id;
+        targetTripId = createRes.data.id;
       }
 
-      // 2. Add destination stop
       await api.post(`/core/trips/${targetTripId}/stops`, {
         cityId: cityToAdd.id,
+        cityName: cityToAdd.name,
         arrivalDate: new Date().toISOString(),
-        departureDate: new Date(Date.now() + 3 * 86400000).toISOString(),
+        departureDate: new Date(Date.now() + 2 * 86400000).toISOString(),
         sortOrder: 1
       });
 
-      toast.success(`🎉 Added ${cityToAdd.name} to your itinerary!`);
+      toast.success(`Added ${cityToAdd.name} to itinerary! 📍`);
       setIsAddToTripOpen(false);
       navigate(`/dashboard/trips/${targetTripId}`);
     } catch (err) {
@@ -122,7 +157,7 @@ export default function Discover() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Discover Destinations</h1>
-          <p className="text-sm text-slate-500 mt-1">Explore popular travel cities, attractions, and activity cost indices in INR (₹)</p>
+          <p className="text-sm text-slate-500 mt-1">Explore popular travel cities, daily cost benchmarks, and activity pricing in INR (₹)</p>
         </div>
       </div>
 
@@ -165,61 +200,98 @@ export default function Discover() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredCities.map((city) => (
-            <motion.div
-              key={city.id}
-              whileHover={{ y: -4 }}
-              className="bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group"
-            >
-              {/* Image banner */}
-              <div className="h-52 relative overflow-hidden bg-slate-200">
-                <img
-                  src={city.imageUrl || 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&q=80&w=800'}
-                  alt={city.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                
-                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full flex items-center space-x-1 text-slate-800 text-[11px] font-bold shadow-sm">
-                  <Star size={12} className="text-amber-500 fill-amber-500" />
-                  <span>{city.popularityScore || 95}/100</span>
+          {filteredCities.map((city) => {
+            const pricing = getCityPricing(city);
+            return (
+              <motion.div
+                key={city.id}
+                whileHover={{ y: -4 }}
+                className="bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group"
+              >
+                {/* Image banner */}
+                <div className="h-52 relative overflow-hidden bg-slate-200">
+                  <img
+                    src={city.imageUrl || 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&q=80&w=800'}
+                    alt={city.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
+                  
+                  {/* Floating Price Pill (Top-Left) */}
+                  <div className="absolute top-4 left-4 bg-emerald-600 text-white px-3 py-1 rounded-full flex items-center space-x-1 text-xs font-extrabold shadow-md">
+                    <span>{pricing.daily}</span>
+                    <span className="text-[10px] font-normal opacity-90">/day</span>
+                  </div>
+
+                  {/* Rating / Score (Top-Right) */}
+                  <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full flex items-center space-x-1 text-slate-800 text-[11px] font-bold shadow-sm">
+                    <Star size={12} className="text-amber-500 fill-amber-500" />
+                    <span>{city.popularityScore || 95}/100</span>
+                  </div>
+
+                  {/* City & Country Title */}
+                  <div className="absolute bottom-4 left-4 right-4 text-white">
+                    <h3 className="font-bold text-2xl drop-shadow-sm">{city.name}</h3>
+                    <p className="text-xs text-slate-200 mt-0.5">{city.country} • {city.region}</p>
+                  </div>
                 </div>
 
-                <div className="absolute bottom-4 left-4 right-4 text-white">
-                  <h3 className="font-bold text-2xl drop-shadow-sm">{city.name}</h3>
-                  <p className="text-xs text-slate-200 mt-0.5">{city.country} • {city.region}</p>
-                </div>
-              </div>
+                {/* Body with Prominent Pricing Breakdown */}
+                <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
+                  <div className="space-y-2.5">
+                    {/* Primary Price Row */}
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Est. Daily Budget</span>
+                        <div className="flex items-baseline space-x-1">
+                          <span className="text-lg font-extrabold text-slate-900">{pricing.daily}</span>
+                          <span className="text-xs text-slate-500 font-medium">/ person</span>
+                        </div>
+                      </div>
 
-              {/* Body */}
-              <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-500 font-medium">Cost Index:</span>
-                  <span className="font-bold text-slate-800 bg-slate-100 px-2.5 py-1 rounded-lg">
-                    {city.costIndex > 3 ? '₹₹₹₹ (High)' : city.costIndex > 2 ? '₹₹₹ (Moderate)' : '₹ (Budget)'}
-                  </span>
-                </div>
+                      <div className="text-right">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Avg 5-Day Trip</span>
+                        <span className="text-sm font-bold text-emerald-600">{pricing.avgTrip}</span>
+                      </div>
+                    </div>
 
-                <div className="pt-2 border-t border-slate-50 flex items-center space-x-2">
-                  <button
-                    onClick={() => setSelectedCity(city)}
-                    className="flex-1 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-800 font-semibold rounded-xl text-xs transition text-center cursor-pointer"
-                  >
-                    View Activities
-                  </button>
+                    {/* Price Range & Cost Tier Badges */}
+                    <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-100">
+                      <span className="text-[11px] text-slate-500">
+                        Range: <strong className="text-slate-700">{pricing.range}</strong>
+                      </span>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                        pricing.badge === 'Budget' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                        pricing.badge === 'Moderate' ? 'bg-sky-50 text-sky-700 border border-sky-200' :
+                        'bg-purple-50 text-purple-700 border border-purple-200'
+                      }`}>
+                        {city.costIndex > 3 ? '₹₹₹₹ ' : city.costIndex > 2 ? '₹₹₹ ' : '₹ '}{pricing.badge}
+                      </span>
+                    </div>
+                  </div>
 
-                  <button
-                    onClick={() => openAddToTripModal(city)}
-                    className="py-2.5 px-4 bg-sky-600 hover:bg-sky-700 active:scale-95 text-white font-bold rounded-xl text-xs transition flex items-center space-x-1 shrink-0 cursor-pointer shadow-md shadow-sky-600/20"
-                    title="Add to itinerary"
-                  >
-                    <Plus size={14} />
-                    <span>Add to Trip</span>
-                  </button>
+                  {/* Actions */}
+                  <div className="pt-2 border-t border-slate-50 flex items-center space-x-2">
+                    <button
+                      onClick={() => setSelectedCity(city)}
+                      className="flex-1 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-800 font-semibold rounded-xl text-xs transition text-center cursor-pointer"
+                    >
+                      View Activities
+                    </button>
+
+                    <button
+                      onClick={() => openAddToTripModal(city)}
+                      className="py-2.5 px-4 bg-sky-600 hover:bg-sky-700 active:scale-95 text-white font-bold rounded-xl text-xs transition flex items-center space-x-1 shrink-0 cursor-pointer shadow-md shadow-sky-600/20"
+                      title="Add to itinerary"
+                    >
+                      <Plus size={14} />
+                      <span>Add to Trip</span>
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            );
+          })}
         </div>
       )}
 
