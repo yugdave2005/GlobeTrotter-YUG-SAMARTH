@@ -1,12 +1,15 @@
 import dotenv from 'dotenv';
-import connectDB from './config/db.js';
+import sequelize, { connectDB } from './config/db.js';
 import app from './app.js';
 
 // Load env vars
 dotenv.config();
 
 // Connect to database
-connectDB();
+await connectDB();
+
+// Sync database models (optional but good for development)
+await sequelize.sync();
 
 const PORT = process.env.PORT || 5000;
 
