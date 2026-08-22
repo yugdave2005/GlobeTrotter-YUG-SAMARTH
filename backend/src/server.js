@@ -17,14 +17,28 @@ server.listen(PORT, () => {
   console.log(`Backend server (with WebSockets) running on port ${PORT}`);
 });
 
-// Graceful shutdown on nodemon restart and process exit
-const shutdown = () => {
-  server.close(() => {
-    process.exit(0);
-  });
+// Graceful shutdown on process exit or reload
+const shutdown = (signal) => {
+  if (server) {
+    if (typeof server.closeAllConnections === 'function') {
+      server.closeAllConnections();
+    }
+    server.close(() => {
+      if (signal === 'SIGUSR2') {
+        process.kill(process.pid, 'SIGUSR2');
+      } else {
+        process.exit(0);
+      }
+    });
+
+    // Fallback emergency exit
+    setTimeout(() => {
+      process.exit(0);
+    }, 400).unref();
+  }
 };
 
-process.once('SIGUSR2', shutdown);
-process.on('SIGINT', shutdown);
-process.on('SIGTERM', shutdown);
+process.once('SIGUSR2', () => shutdown('SIGUSR2'));
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));
 
