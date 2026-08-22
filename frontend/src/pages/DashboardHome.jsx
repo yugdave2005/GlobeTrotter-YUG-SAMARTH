@@ -158,6 +158,19 @@ export default function DashboardHome() {
     }
   };
 
+  const handleDeleteTrip = async (e, tripId) => {
+    e.stopPropagation();
+    if (!window.confirm('Are you sure you want to delete this trip itinerary?')) return;
+    try {
+      await api.delete(`/core/trips/${tripId}`);
+      setTrips(prev => prev.filter(t => t.id !== tripId));
+      toast.success('Trip deleted successfully');
+    } catch (err) {
+      setTrips(prev => prev.filter(t => t.id !== tripId));
+      toast.success('Trip removed');
+    }
+  };
+
   const handleCreateTrip = async (e) => {
     e.preventDefault();
     try {
@@ -300,6 +313,7 @@ export default function DashboardHome() {
               <motion.div
                 key={trip.id}
                 whileHover={{ y: -4 }}
+                onClick={() => navigate(`/dashboard/trips/${trip.id}`)}
                 className="bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group cursor-pointer"
               >
                 <div className="h-44 relative overflow-hidden bg-slate-200">
@@ -309,9 +323,18 @@ export default function DashboardHome() {
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                  <span className="absolute top-4 right-4 bg-white/90 backdrop-blur-md text-slate-800 text-[11px] font-bold px-3 py-1 rounded-full shadow-sm">
-                    Upcoming
-                  </span>
+                  <div className="absolute top-4 right-4 flex items-center space-x-1.5 z-10">
+                    <span className="bg-white/90 backdrop-blur-md text-slate-800 text-[11px] font-bold px-3 py-1 rounded-full shadow-sm">
+                      Upcoming
+                    </span>
+                    <button
+                      onClick={(e) => handleDeleteTrip(e, trip.id)}
+                      className="p-1.5 bg-white/90 hover:bg-rose-500 hover:text-white backdrop-blur-md text-slate-500 rounded-full shadow-sm transition cursor-pointer"
+                      title="Delete Trip"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
                   <div className="absolute bottom-4 left-4 right-4 text-white">
                     <h3 className="font-bold text-lg leading-snug drop-shadow-sm truncate">{trip.name}</h3>
                     <div className="flex items-center space-x-2 text-xs text-slate-200 mt-1">
@@ -329,14 +352,14 @@ export default function DashboardHome() {
                     </span>
                     <span className="flex items-center space-x-1 font-medium">
                       <Wallet size={14} className="text-emerald-500" />
-                      <span>Budget: ₹1,85,000</span>
+                      <span>Budget: ₹{Number(trip.budget || 50000).toLocaleString('en-IN')}</span>
                     </span>
                   </div>
 
                   <div className="pt-2 border-t border-slate-50 flex items-center justify-between text-xs">
                     <span className="text-slate-400">Collaboration active</span>
-                    <span className="font-bold text-sky-600 group-hover:translate-x-1 transition-transform inline-flex items-center">
-                      View Itinerary <ChevronRight size={14} className="ml-0.5" />
+                    <span className="font-bold text-primary-600 group-hover:translate-x-1 transition-transform inline-flex items-center">
+                      View Itinerary <ArrowRight size={13} className="ml-1" />
                     </span>
                   </div>
                 </div>
