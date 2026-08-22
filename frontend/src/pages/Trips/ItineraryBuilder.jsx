@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -13,6 +13,8 @@ import { useSocket } from '../../context/SocketContext';
 import toast from 'react-hot-toast';
 import ConfirmDeleteModal from '../../components/ConfirmDeleteModal';
 import TripRouteMap from '../../components/TripRouteMap';
+import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
 
 // Curated dictionary of nearby destinations by region / hub
 const NEARBY_REGIONS = [
@@ -227,6 +229,17 @@ export default function ItineraryBuilder() {
     fetchCities();
   }, [tripId]);
 
+  // Auto-switch to map view when trip has ended
+  useEffect(() => {
+    if (trip?.endDate) {
+      const tripEndTime = new Date(trip.endDate).getTime();
+      const now = Date.now();
+      if (now > tripEndTime && viewMode === 'timeline') {
+        setViewMode('map');
+      }
+    }
+  }, [trip?.endDate]);
+
   // Real-time socket sync with strict deduplication
   useEffect(() => {
     if (!socket) return;
@@ -305,7 +318,7 @@ export default function ItineraryBuilder() {
     };
   }, [socket, tripId]);
 
-  const fetchTripData = async () => {
+  const fetchTripData = useCallback(async () => {
     try {
       const { data } = await api.get(`/core/trips/${tripId}`);
       setTrip(data);
@@ -344,7 +357,7 @@ export default function ItineraryBuilder() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [tripId]);
 
   const fetchCities = async () => {
     try {
@@ -444,10 +457,8 @@ export default function ItineraryBuilder() {
       } catch (e) {
         console.log('Deleted stop locally');
       }
-      setTrip(prev => ({
-        ...prev,
-        stops: prev.stops.filter(s => s.id !== stopId)
-      }));
+      // Refetch to ensure clean state
+      await fetchTripData();
       toast.success('Destination stop deleted!');
     } else if (deleteConfirmModal.type === 'activity') {
       const { id: stopId, secondaryId: actId, cost } = deleteConfirmModal;
@@ -456,18 +467,8 @@ export default function ItineraryBuilder() {
       } catch (e) {
         console.log('Deleted locally');
       }
-      setTrip(prev => ({
-        ...prev,
-        stops: prev.stops.map(s => {
-          if (s.id === stopId) {
-            return {
-              ...s,
-              activities: s.activities.filter(a => a.id !== actId)
-            };
-          }
-          return s;
-        })
-      }));
+      // Refetch to ensure clean state
+      await fetchTripData();
       toast.success(`Activity removed. ₹${Number(cost || 0).toLocaleString('en-IN')} restored to budget! 💰`);
     }
   };
@@ -542,23 +543,11 @@ export default function ItineraryBuilder() {
         sortOrder: (trip?.stops?.length || 0) + 1
       };
 
-      const { data } = await api.post(`/core/trips/${tripId}/stops`, payload);
+      await api.post(`/core/trips/${tripId}/stops`, payload);
       
-      const formattedStop = {
-        ...data,
-        city: {
-          ...(data.city || {}),
-          name: targetCityName
-        }
-      };
+      // Refetch full trip to ensure stops persist correctly with all relations
+      await fetchTripData();
 
-      setTrip(prev => {
-        if (prev?.stops?.some(s => s.id === data.id)) return prev;
-        return {
-          ...prev,
-          stops: [...(prev?.stops || []), formattedStop]
-        };
-      });
       setIsAddStopOpen(false);
       toast.success(`Added ${targetCityName} to itinerary! 📍`);
     } catch (err) {
@@ -589,27 +578,15 @@ export default function ItineraryBuilder() {
     if (!selectedStopId) return;
 
     try {
-      const { data } = await api.post(`/core/trips/${tripId}/stops/${selectedStopId}/activities`, {
+      await api.post(`/core/trips/${tripId}/stops/${selectedStopId}/activities`, {
         name: sug.name,
         category: sug.category,
         customCost: Number(sug.cost),
         scheduledTime: new Date().toISOString()
       });
 
-      setTrip(prev => ({
-        ...prev,
-        stops: prev.stops.map(s => {
-          if (s.id === selectedStopId) {
-            const currentActs = s.activities || [];
-            if (currentActs.some(a => a.id === data.id || a.activity?.name === sug.name)) return s;
-            return {
-              ...s,
-              activities: [...currentActs, data]
-            };
-          }
-          return s;
-        })
-      }));
+      // Refetch to ensure consistency
+      await fetchTripData();
 
       setIsAddActivityOpen(false);
       toast.success(`Added "${sug.name}"! ₹${sug.cost.toLocaleString('en-IN')} deducted from budget. 💸`);
@@ -645,27 +622,15 @@ export default function ItineraryBuilder() {
     const costNum = Number(activityForm.customCost) || 0;
 
     try {
-      const { data } = await api.post(`/core/trips/${tripId}/stops/${selectedStopId}/activities`, {
+      await api.post(`/core/trips/${tripId}/stops/${selectedStopId}/activities`, {
         name: activityForm.name,
         category: activityForm.category,
         customCost: costNum,
         scheduledTime: activityForm.scheduledTime || new Date().toISOString()
       });
 
-      setTrip(prev => ({
-        ...prev,
-        stops: prev.stops.map(s => {
-          if (s.id === selectedStopId) {
-            const currentActs = s.activities || [];
-            if (currentActs.some(a => a.id === data.id || a.activity?.name === activityForm.name)) return s;
-            return {
-              ...s,
-              activities: [...currentActs, data]
-            };
-          }
-          return s;
-        })
-      }));
+      // Refetch to ensure consistency
+      await fetchTripData();
     } catch (err) {
       const localAct = {
         id: `act-${Date.now()}`,
@@ -726,6 +691,215 @@ export default function ItineraryBuilder() {
       case 'RELAXATION': return 'bg-purple-50 text-purple-700 border-purple-200';
       default: return 'bg-sky-50 text-sky-700 border-sky-200';
     }
+  };
+
+  // ═══════════════════════════════════════════
+  // 📄 Proper PDF Itinerary Generator (jsPDF)
+  // ═══════════════════════════════════════════
+  const generateItineraryPDF = () => {
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 16;
+    let y = 20;
+
+    const addPageIfNeeded = (requiredSpace = 30) => {
+      if (y + requiredSpace > 275) {
+        doc.addPage();
+        y = 20;
+      }
+    };
+
+    // ── Title Header ──
+    doc.setFillColor(15, 23, 42); // slate-900
+    doc.rect(0, 0, pageWidth, 42, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.text(trip?.name || 'Trip Itinerary', margin, 18);
+    
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text(trip?.description || 'Your personalized travel itinerary', margin, 26);
+    
+    doc.setFontSize(8);
+    doc.text(`Travel Dates: ${new Date(trip?.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })} to ${new Date(trip?.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}`, margin, 33);
+    doc.text(`${trip?.stops?.length || 0} Destinations  •  ${trip?.stops?.reduce((sum, s) => sum + (s.activities?.length || 0), 0) || 0} Activities Planned`, margin, 38);
+
+    // ── Budget Box (top-right) ──
+    doc.setFillColor(16, 185, 129); // emerald-500
+    doc.roundedRect(pageWidth - margin - 56, 6, 56, 30, 3, 3, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.text('PLANNED BUDGET', pageWidth - margin - 52, 14);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Rs.${tripBudget.toLocaleString('en-IN')}`, pageWidth - margin - 52, 22);
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Spent: Rs.${totalCost.toLocaleString('en-IN')}  |  Left: Rs.${remainingBudget.toLocaleString('en-IN')}`, pageWidth - margin - 52, 30);
+
+    y = 52;
+
+    // ── Stop-by-Stop Itinerary ──
+    const stops = trip?.stops || [];
+    stops.forEach((stop, sIdx) => {
+      addPageIfNeeded(50);
+      
+      const stopCost = stop.activities?.reduce((sum, a) => sum + (a.customCost || a.activity?.cost || 0), 0) || 0;
+      const arrDate = new Date(stop.arrivalDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+      const depDate = new Date(stop.departureDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+
+      // Stop Header Bar
+      doc.setFillColor(2, 132, 199); // sky-600
+      doc.roundedRect(margin, y, pageWidth - margin * 2, 12, 2, 2, 'F');
+      
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Stop ${sIdx + 1}:  ${stop.city?.name || 'Destination'}`, margin + 4, y + 8);
+      
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`${arrDate} - ${depDate}`, pageWidth - margin - 50, y + 8);
+      
+      y += 16;
+
+      // Activities Table
+      const activities = stop.activities || [];
+      if (activities.length > 0) {
+        const tableHeaders = [['#', 'Activity Name', 'Category', 'Duration', 'Cost (Rs.)']];
+        const tableData = activities.map((a, aIdx) => [
+          `${aIdx + 1}`,
+          a.activity?.name || 'Activity',
+          a.activity?.category || 'GENERAL',
+          `${a.activity?.durationMinutes || 90} mins`,
+          `Rs.${(a.customCost || a.activity?.cost || 0).toLocaleString('en-IN')}`
+        ]);
+
+        doc.autoTable({
+          head: tableHeaders,
+          body: tableData,
+          startY: y,
+          margin: { left: margin, right: margin },
+          theme: 'striped',
+          styles: {
+            fontSize: 8,
+            cellPadding: 3,
+            font: 'helvetica',
+            textColor: [30, 41, 59],
+            lineColor: [226, 232, 240],
+            lineWidth: 0.2
+          },
+          headStyles: {
+            fillColor: [241, 245, 249], // slate-100
+            textColor: [51, 65, 85], // slate-700
+            fontStyle: 'bold',
+            fontSize: 7
+          },
+          alternateRowStyles: {
+            fillColor: [248, 250, 252] // slate-50
+          },
+          columnStyles: {
+            0: { cellWidth: 8, halign: 'center' },
+            1: { cellWidth: 'auto' },
+            2: { cellWidth: 24 },
+            3: { cellWidth: 22 },
+            4: { cellWidth: 26, halign: 'right', fontStyle: 'bold' }
+          }
+        });
+
+        y = doc.lastAutoTable.finalY + 4;
+
+        // Stop Total Row
+        doc.setFillColor(241, 245, 249);
+        doc.roundedRect(margin, y, pageWidth - margin * 2, 8, 1, 1, 'F');
+        doc.setTextColor(51, 65, 85);
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Stop Total: Rs.${stopCost.toLocaleString('en-IN')}  (${activities.length} activities)`, margin + 4, y + 5.5);
+        y += 14;
+      } else {
+        doc.setTextColor(148, 163, 184);
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'italic');
+        doc.text('No activities scheduled for this stop.', margin + 4, y + 4);
+        y += 12;
+      }
+    });
+
+    // ── Budget Summary Section ──
+    addPageIfNeeded(45);
+    
+    doc.setFillColor(248, 250, 252);
+    doc.roundedRect(margin, y, pageWidth - margin * 2, 35, 3, 3, 'F');
+    doc.setDrawColor(226, 232, 240);
+    doc.roundedRect(margin, y, pageWidth - margin * 2, 35, 3, 3, 'S');
+    
+    doc.setTextColor(51, 65, 85);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text('TRIP BUDGET SUMMARY', margin + 5, y + 8);
+    
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 116, 139);
+    
+    const budgetCol1 = margin + 5;
+    const budgetCol2 = margin + 65;
+    const budgetCol3 = margin + 125;
+    
+    doc.text('Total Budget:', budgetCol1, y + 16);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 23, 42);
+    doc.text(`Rs.${tripBudget.toLocaleString('en-IN')}`, budgetCol1, y + 22);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 116, 139);
+    doc.text('Activities Spent:', budgetCol2, y + 16);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(234, 88, 12); // orange
+    doc.text(`Rs.${totalCost.toLocaleString('en-IN')}`, budgetCol2, y + 22);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 116, 139);
+    doc.text('Remaining Balance:', budgetCol3, y + 16);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(isOverBudget ? 220 : 16, isOverBudget ? 38 : 185, isOverBudget ? 38 : 129);
+    doc.text(`Rs.${Math.abs(remainingBudget).toLocaleString('en-IN')}${isOverBudget ? ' (Over!)' : ''}`, budgetCol3, y + 22);
+    
+    const percentUsed = Math.min((totalCost / tripBudget) * 100, 100);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 116, 139);
+    doc.setFontSize(7);
+    doc.text(`Budget Utilized: ${Math.round(percentUsed)}%`, budgetCol1, y + 30);
+
+    // Progress bar
+    const barX = budgetCol2;
+    const barWidth = pageWidth - margin - budgetCol2 - 5;
+    doc.setFillColor(226, 232, 240);
+    doc.roundedRect(barX, y + 27, barWidth, 4, 2, 2, 'F');
+    doc.setFillColor(isOverBudget ? 220 : percentUsed > 80 ? 245 : 16, isOverBudget ? 38 : percentUsed > 80 ? 158 : 185, isOverBudget ? 38 : percentUsed > 80 ? 11 : 129);
+    doc.roundedRect(barX, y + 27, barWidth * (percentUsed / 100), 4, 2, 2, 'F');
+
+    y += 42;
+
+    // ── Footer ──
+    addPageIfNeeded(15);
+    doc.setDrawColor(226, 232, 240);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 5;
+    doc.setTextColor(148, 163, 184);
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Generated by GlobeTrotter Travel Planner', margin, y + 3);
+    doc.text(`Downloaded on ${new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}`, pageWidth - margin - 50, y + 3);
+
+    // Save the PDF
+    const safeName = (trip?.name || 'Trip-Itinerary').replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '-');
+    doc.save(`${safeName}-Itinerary.pdf`);
+    toast.success('📄 PDF itinerary downloaded successfully!');
   };
 
   if (loading) {
@@ -800,9 +974,9 @@ export default function ItineraryBuilder() {
 
           {/* Download PDF Button */}
           <button
-            onClick={() => window.print()}
+            onClick={() => generateItineraryPDF()}
             className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-sm shadow-emerald-600/20 transition flex items-center space-x-1.5 cursor-pointer"
-            title="Download and print formatted PDF itinerary"
+            title="Download formatted PDF itinerary"
           >
             <FileDown size={15} />
             <span>Download PDF</span>
@@ -1188,70 +1362,7 @@ export default function ItineraryBuilder() {
         <TripRouteMap trip={trip} />
       )}
 
-      {/* 📄 Print-Only Optimized PDF Document Layout */}
-      <div className="hidden print-only p-8 text-black space-y-6">
-        <div className="border-b-2 border-slate-800 pb-4 flex justify-between items-end">
-          <div>
-            <h1 className="text-3xl font-extrabold">{trip?.name}</h1>
-            <p className="text-sm text-slate-600 mt-1">{trip?.description}</p>
-            <p className="text-xs text-slate-500 mt-1">
-              Dates: {new Date(trip?.startDate).toLocaleDateString()} to {new Date(trip?.endDate).toLocaleDateString()}
-            </p>
-          </div>
-          <div className="text-right">
-            <span className="text-xs font-bold uppercase text-slate-500 block">Planned Budget</span>
-            <span className="text-xl font-bold">₹{tripBudget.toLocaleString('en-IN')}</span>
-            <p className="text-xs text-slate-500">Activities Total: ₹{totalCost.toLocaleString('en-IN')}</p>
-          </div>
-        </div>
 
-        <div className="space-y-6">
-          <h2 className="text-lg font-bold uppercase tracking-wider text-slate-700">Detailed Stop-by-Stop Itinerary</h2>
-          {trip?.stops?.map((stop, sIdx) => (
-            <div key={sIdx} className="border border-slate-300 rounded-xl p-4 space-y-3">
-              <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-                <div>
-                  <h3 className="text-base font-bold text-slate-900">Stop {sIdx + 1}: {stop.city?.name}</h3>
-                  <span className="text-xs text-slate-500">{new Date(stop.arrivalDate).toLocaleDateString()} – {new Date(stop.departureDate).toLocaleDateString()}</span>
-                </div>
-                <span className="text-xs font-semibold bg-slate-100 px-2.5 py-1 rounded">
-                  {stop.activities?.length || 0} Scheduled Activities
-                </span>
-              </div>
-
-              {stop.activities && stop.activities.length > 0 ? (
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr className="border-b border-slate-200 text-slate-600">
-                      <th className="py-1.5 font-bold">Activity Name</th>
-                      <th className="py-1.5 font-bold">Category</th>
-                      <th className="py-1.5 font-bold">Duration</th>
-                      <th className="py-1.5 font-bold text-right">Cost (₹)</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {stop.activities.map((a, aIdx) => (
-                      <tr key={aIdx}>
-                        <td className="py-1.5 font-medium">{a.activity?.name}</td>
-                        <td className="py-1.5 text-slate-500">{a.activity?.category || 'ACTIVITY'}</td>
-                        <td className="py-1.5 text-slate-500">{a.activity?.durationMinutes || 90} mins</td>
-                        <td className="py-1.5 font-bold text-right">₹{(a.customCost || a.activity?.cost || 0).toLocaleString('en-IN')}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : (
-                <p className="text-xs text-slate-400 italic">No scheduled activities for this stop.</p>
-              )}
-            </div>
-          ))}
-        </div>
-
-        <div className="pt-6 border-t border-slate-300 flex justify-between text-xs text-slate-500">
-          <span>Generated by GlobeTrotter Travel Planner</span>
-          <span>Printed on {new Date().toLocaleDateString()}</span>
-        </div>
-      </div>
 
       {/* Add Stop Modal with Validation Feedback & Date Range Guardrails */}
       <AnimatePresence>
