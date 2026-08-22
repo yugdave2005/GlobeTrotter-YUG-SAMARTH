@@ -14,7 +14,7 @@ import toast from 'react-hot-toast';
 import ConfirmDeleteModal from '../../components/ConfirmDeleteModal';
 import TripRouteMap from '../../components/TripRouteMap';
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 // Curated dictionary of nearby destinations by region / hub
 const NEARBY_REGIONS = [
@@ -726,7 +726,7 @@ export default function ItineraryBuilder() {
           `Rs.${(a.customCost || a.activity?.cost || 0).toLocaleString('en-IN')}`
         ]);
 
-        doc.autoTable({
+        autoTable(doc, {
           head: tableHeaders,
           body: tableData,
           startY: y,
@@ -758,7 +758,7 @@ export default function ItineraryBuilder() {
           }
         });
 
-        y = doc.lastAutoTable.finalY + 4;
+        y = doc.previousAutoTable.finalY + 4;
 
         // Stop Total Row
         doc.setFillColor(241, 245, 249);
