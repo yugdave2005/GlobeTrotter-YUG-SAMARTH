@@ -16,7 +16,7 @@ const POPULAR_DESTINATIONS = [
     name: 'Paris',
     country: 'France',
     region: 'Europe',
-    costIndex: '$$$',
+    costIndex: '₹₹₹',
     popularityScore: 98,
     image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&q=80&w=800',
     tags: ['Romance', 'Museums', 'Cuisine']
@@ -26,7 +26,7 @@ const POPULAR_DESTINATIONS = [
     name: 'Tokyo',
     country: 'Japan',
     region: 'Asia',
-    costIndex: '$$$$',
+    costIndex: '₹₹₹₹',
     popularityScore: 99,
     image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&q=80&w=800',
     tags: ['Tech', 'Culture', 'Nightlife']
@@ -36,7 +36,7 @@ const POPULAR_DESTINATIONS = [
     name: 'Bali',
     country: 'Indonesia',
     region: 'Asia',
-    costIndex: '$',
+    costIndex: '₹',
     popularityScore: 96,
     image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&q=80&w=800',
     tags: ['Beaches', 'Wellness', 'Adventure']
@@ -46,7 +46,7 @@ const POPULAR_DESTINATIONS = [
     name: 'Rome',
     country: 'Italy',
     region: 'Europe',
-    costIndex: '$$',
+    costIndex: '₹₹',
     popularityScore: 95,
     image: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&q=80&w=800',
     tags: ['History', 'Architecture', 'Food']
@@ -56,7 +56,7 @@ const POPULAR_DESTINATIONS = [
     name: 'New York',
     country: 'USA',
     region: 'Americas',
-    costIndex: '$$$$',
+    costIndex: '₹₹₹₹',
     popularityScore: 97,
     image: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&q=80&w=800',
     tags: ['Skyline', 'Shows', 'Shopping']
@@ -66,7 +66,7 @@ const POPULAR_DESTINATIONS = [
     name: 'Barcelona',
     country: 'Spain',
     region: 'Europe',
-    costIndex: '$$',
+    costIndex: '₹₹',
     popularityScore: 94,
     image: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?auto=format&fit=crop&q=80&w=800',
     tags: ['Art', 'Beach', 'Tapas']
@@ -178,14 +178,14 @@ export default function DashboardHome() {
           <div className="flex flex-wrap items-center gap-3 shrink-0">
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="bg-white text-primary-700 hover:bg-primary-50 px-6 py-3.5 rounded-2xl font-bold text-sm shadow-lg hover:shadow-xl transition-all flex items-center space-x-2 active:scale-95"
+              className="bg-white hover:bg-slate-50 text-sky-800 px-6 py-3.5 rounded-2xl font-bold text-sm shadow-lg hover:shadow-xl transition-all flex items-center space-x-2 active:scale-95 cursor-pointer z-10"
             >
-              <Plus size={18} />
-              <span>Plan New Trip</span>
+              <Plus size={18} className="text-sky-700 stroke-[2.5]" />
+              <span className="text-sky-800 font-bold">Plan New Trip</span>
             </button>
             <a
               href="#destinations"
-              className="bg-white/10 hover:bg-white/20 border border-white/20 text-white px-5 py-3.5 rounded-2xl font-semibold text-sm backdrop-blur-sm transition active:scale-95"
+              className="bg-white/15 hover:bg-white/25 border border-white/20 text-white px-5 py-3.5 rounded-2xl font-semibold text-sm backdrop-blur-sm transition active:scale-95"
             >
               Explore Cities
             </a>
@@ -298,13 +298,13 @@ export default function DashboardHome() {
                     </span>
                     <span className="flex items-center space-x-1 font-medium">
                       <Wallet size={14} className="text-emerald-500" />
-                      <span>Budget: $2,400</span>
+                      <span>Budget: ₹1,85,000</span>
                     </span>
                   </div>
 
                   <div className="pt-2 border-t border-slate-50 flex items-center justify-between text-xs">
                     <span className="text-slate-400">Collaboration active</span>
-                    <span className="font-bold text-primary-600 group-hover:translate-x-1 transition-transform inline-flex items-center">
+                    <span className="font-bold text-sky-600 group-hover:translate-x-1 transition-transform inline-flex items-center">
                       View Itinerary <ChevronRight size={14} className="ml-0.5" />
                     </span>
                   </div>
@@ -315,7 +315,7 @@ export default function DashboardHome() {
         ) : (
           /* Empty state */
           <div className="bg-white rounded-3xl border border-slate-100 p-8 sm:p-12 text-center space-y-4 shadow-sm">
-            <div className="w-16 h-16 bg-primary-50 text-primary-600 rounded-3xl flex items-center justify-center mx-auto text-2xl shadow-inner">
+            <div className="w-16 h-16 bg-sky-50 text-sky-600 rounded-3xl flex items-center justify-center mx-auto text-2xl shadow-inner">
               ✈️
             </div>
             <div className="max-w-md mx-auto">
@@ -326,9 +326,9 @@ export default function DashboardHome() {
             </div>
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="bg-primary-600 hover:bg-primary-700 text-white font-semibold px-6 py-3 rounded-2xl text-sm shadow-md transition inline-flex items-center space-x-2"
+              className="bg-sky-600 hover:bg-sky-700 text-white font-bold px-6 py-3.5 rounded-2xl text-sm shadow-md shadow-sky-600/20 transition inline-flex items-center space-x-2 cursor-pointer active:scale-95"
             >
-              <Plus size={16} />
+              <Plus size={18} />
               <span>Create Your First Trip</span>
             </button>
           </div>
@@ -389,7 +389,7 @@ export default function DashboardHome() {
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-slate-500 font-medium">Cost Level:</span>
                   <span className="font-bold text-slate-800 bg-slate-100 px-2.5 py-1 rounded-lg">
-                    {city.costIndex || '$$$'}
+                    {city.costIndex || '₹₹₹'}
                   </span>
                 </div>
 
@@ -406,7 +406,7 @@ export default function DashboardHome() {
                     setTripForm(prev => ({ ...prev, name: `Trip to ${city.name}` }));
                     setIsCreateModalOpen(true);
                   }}
-                  className="w-full py-2.5 bg-primary-50 hover:bg-primary-100 text-primary-700 font-semibold rounded-xl text-xs transition flex items-center justify-center space-x-1"
+                  className="w-full py-2.5 bg-sky-50 hover:bg-sky-100 text-sky-700 font-bold rounded-xl text-xs transition flex items-center justify-center space-x-1 cursor-pointer"
                 >
                   <Plus size={14} />
                   <span>Plan Trip to {city.name}</span>
@@ -422,22 +422,22 @@ export default function DashboardHome() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div>
             <div className="flex items-center space-x-2">
-              <Wallet className="text-primary-600" size={20} />
+              <Wallet className="text-sky-600" size={20} />
               <h3 className="text-lg font-bold text-slate-900">Budget & Cost Breakdown Overview</h3>
             </div>
             <p className="text-xs text-slate-500 mt-1">Automatic financial view and expense tracker across all your travels</p>
           </div>
           <div className="text-left md:text-right">
             <span className="text-xs text-slate-400 uppercase font-semibold">Total Estimated Budget</span>
-            <p className="text-2xl font-bold text-slate-900">$3,850.00</p>
+            <p className="text-2xl font-bold text-slate-900">₹2,45,000</p>
           </div>
         </div>
 
         {/* Budget Progress Bar */}
         <div className="space-y-3">
           <div className="flex justify-between text-xs font-semibold">
-            <span className="text-slate-600">Spent: $1,920.00 (50%)</span>
-            <span className="text-slate-400">Remaining: $1,930.00</span>
+            <span className="text-slate-600">Spent: ₹1,20,000 (49%)</span>
+            <span className="text-slate-400">Remaining: ₹1,25,000</span>
           </div>
           <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden flex">
             <div style={{ width: '35%' }} className="bg-blue-500" title="Stays (35%)" />

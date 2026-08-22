@@ -107,6 +107,7 @@ model Trip {
   startDate       DateTime @map("start_date")
   endDate         DateTime @map("end_date")
   coverPhotoUrl   String?  @map("cover_photo_url")
+  budget          Float?   @default(50000) @map("budget")
   isPublic        Boolean  @default(false) @map("is_public")
   shareSlug       String?  @unique @map("share_slug")
   createdAt       DateTime @default(now()) @map("created_at")

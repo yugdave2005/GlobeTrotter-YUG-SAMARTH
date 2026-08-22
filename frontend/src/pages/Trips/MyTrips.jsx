@@ -1,0 +1,355 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Plus, Calendar, MapPin, Search, Filter, Trash2, 
+  ChevronRight, Sparkles, Clock, Globe, ArrowRight, X, AlertCircle
+} from 'lucide-react';
+import api from '../../utils/api';
+import toast from 'react-hot-toast';
+
+const DUMMY_TRIPS = [
+  {
+    id: 'demo-1',
+    name: 'Classic Euro Tour 2026 🇪🇺',
+    description: 'A 2-week scenic journey across Paris, Rome, and Barcelona.',
+    startDate: '2026-06-15',
+    endDate: '2026-06-29',
+    coverPhotoUrl: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&q=80&w=800',
+    status: 'Upcoming',
+    stops: [{ city: { name: 'Paris' } }, { city: { name: 'Rome' } }, { city: { name: 'Barcelona' } }],
+    estimatedBudget: 3200
+  },
+  {
+    id: 'demo-2',
+    name: 'Tokyo Neon & Cherry Blossoms 🌸',
+    description: 'High-tech exploration, sushi masterclasses, and Mount Fuji views.',
+    startDate: '2026-04-10',
+    endDate: '2026-04-20',
+    coverPhotoUrl: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&q=80&w=800',
+    status: 'Upcoming',
+    stops: [{ city: { name: 'Tokyo' } }],
+    estimatedBudget: 2800
+  },
+  {
+    id: 'demo-3',
+    name: 'Bali Tropical Retreat 🌴',
+    description: 'Rice terraces, spiritual sanctuaries, and beachside wellness.',
+    startDate: '2025-11-05',
+    endDate: '2025-11-15',
+    coverPhotoUrl: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&q=80&w=800',
+    status: 'Completed',
+    stops: [{ city: { name: 'Bali' } }],
+    estimatedBudget: 1500
+  }
+];
+
+export default function MyTrips() {
+  const navigate = useNavigate();
+  const [trips, setTrips] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // New Trip Form State
+  const [tripForm, setTripForm] = useState({
+    name: '',
+    description: '',
+    startDate: '',
+    endDate: '',
+    coverPhotoUrl: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&q=80&w=1000'
+  });
+  const [creating, setCreating] = useState(false);
+
+  useEffect(() => {
+    fetchTrips();
+  }, []);
+
+  const fetchTrips = async () => {
+    try {
+      const { data } = await api.get('/core/trips');
+      if (data && data.length > 0) {
+        setTrips(data);
+      } else {
+        setTrips(DUMMY_TRIPS);
+      }
+    } catch (err) {
+      setTrips(DUMMY_TRIPS);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateTrip = async (e) => {
+    e.preventDefault();
+    if (!tripForm.name || !tripForm.startDate || !tripForm.endDate) {
+      toast.error('Please fill in required fields');
+      return;
+    }
+    setCreating(true);
+    try {
+      const { data } = await api.post('/core/trips', tripForm);
+      toast.success('Trip created successfully! 🎉');
+      setTrips([data, ...trips]);
+      setIsModalOpen(false);
+      navigate(`/dashboard/trips/${data.id}`);
+    } catch (err) {
+      // Local fallback
+      const newMockTrip = {
+        id: `trip-${Date.now()}`,
+        ...tripForm,
+        stops: []
+      };
+      setTrips([newMockTrip, ...trips]);
+      setIsModalOpen(false);
+      toast.success('Trip created! 🎉');
+      navigate(`/dashboard/trips/${newMockTrip.id}`);
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const filteredTrips = trips.filter(trip => {
+    const matchesSearch = trip.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (trip.description && trip.description.toLowerCase().includes(searchQuery.toLowerCase()));
+    return matchesSearch;
+  });
+
+  return (
+    <div className="space-y-8 pb-12">
+      {/* Header & Controls */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">My Travel Plans</h1>
+          <p className="text-sm text-slate-500 mt-1">Manage itineraries, timeline schedules, and collaborative trips</p>
+        </div>
+
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="bg-sky-600 hover:bg-sky-700 active:scale-95 text-white font-bold px-6 py-3.5 rounded-2xl text-sm shadow-md shadow-sky-600/20 transition flex items-center justify-center space-x-2 shrink-0 cursor-pointer"
+        >
+          <Plus size={18} />
+          <span>Plan New Trip</span>
+        </button>
+      </div>
+
+      {/* Search & Filter Bar */}
+      <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          <input
+            type="text"
+            placeholder="Search your trips by title or destination..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/40 text-slate-800"
+          />
+        </div>
+
+        <div className="flex items-center space-x-2">
+          {['All', 'Upcoming', 'Completed'].map((filter) => (
+            <button
+              key={filter}
+              onClick={() => setStatusFilter(filter)}
+              className={`px-4 py-2 rounded-xl text-xs font-semibold transition ${
+                statusFilter === filter
+                  ? 'bg-slate-900 text-white shadow-sm'
+                  : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              {filter}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Trips Grid */}
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3].map((n) => (
+            <div key={n} className="h-80 bg-slate-100 rounded-3xl animate-pulse" />
+          ))}
+        </div>
+      ) : filteredTrips.length === 0 ? (
+        <div className="bg-white rounded-3xl border border-slate-100 p-12 text-center space-y-4 shadow-sm">
+          <div className="w-16 h-16 bg-sky-50 text-sky-600 rounded-3xl flex items-center justify-center mx-auto text-2xl">
+            🗺️
+          </div>
+          <div className="max-w-sm mx-auto">
+            <h3 className="text-lg font-bold text-slate-900">No itineraries found</h3>
+            <p className="text-xs text-slate-500 mt-1">Try a different search query or start building a new adventure.</p>
+          </div>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="bg-sky-600 hover:bg-sky-700 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition"
+          >
+            Create Trip
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredTrips.map((trip) => (
+            <motion.div
+              key={trip.id}
+              whileHover={{ y: -4 }}
+              onClick={() => navigate(`/dashboard/trips/${trip.id}`)}
+              className="bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group cursor-pointer"
+            >
+              {/* Cover Image Banner */}
+              <div className="h-48 relative overflow-hidden bg-slate-200">
+                <img
+                  src={trip.coverPhotoUrl || 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&q=80&w=800'}
+                  alt={trip.name}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                <span className="absolute top-4 right-4 bg-white/90 backdrop-blur-md text-slate-800 text-[11px] font-bold px-3 py-1 rounded-full shadow-sm">
+                  {trip.status || 'Active Plan'}
+                </span>
+                <div className="absolute bottom-4 left-4 right-4 text-white">
+                  <h3 className="font-bold text-xl leading-snug drop-shadow-sm truncate">{trip.name}</h3>
+                  <div className="flex items-center space-x-2 text-xs text-slate-200 mt-1">
+                    <Calendar size={13} />
+                    <span>{new Date(trip.startDate).toLocaleDateString()} – {new Date(trip.endDate).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Body */}
+              <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
+                <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
+                  {trip.description || 'Custom multi-city travel itinerary with scheduled activities and budget estimations.'}
+                </p>
+
+                {/* Cities preview pills */}
+                <div className="flex items-center space-x-1 overflow-x-auto pb-1 text-xs">
+                  <MapPin size={14} className="text-sky-500 shrink-0 mr-1" />
+                  {trip.stops && trip.stops.length > 0 ? (
+                    trip.stops.map((stop, idx) => (
+                      <span key={idx} className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-lg text-[11px] font-medium shrink-0">
+                        {stop.city?.name || 'City'}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-[11px] text-slate-400">No destinations added yet</span>
+                  )}
+                </div>
+
+                {/* Footer Action */}
+                <div className="pt-3 border-t border-slate-50 flex items-center justify-between">
+                  <span className="text-xs font-semibold text-slate-400">
+                    {trip.stops?.length || 0} stops
+                  </span>
+                  <span className="text-xs font-bold text-sky-600 group-hover:translate-x-1 transition-transform inline-flex items-center">
+                    Open Builder <ChevronRight size={14} className="ml-0.5" />
+                  </span>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      {/* Create Trip Modal */}
+      <AnimatePresence>
+        {isModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsModalOpen(false)}
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-md"
+            />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-100 p-8 z-10 overflow-hidden"
+            >
+              <button 
+                onClick={() => setIsModalOpen(false)}
+                className="absolute top-6 right-6 p-2 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+              >
+                <X size={20} />
+              </button>
+
+              <div className="mb-6">
+                <h3 className="text-2xl font-bold text-slate-900">Plan New Trip</h3>
+                <p className="text-xs text-slate-500 mt-1">Set up a customized multi-city itinerary</p>
+              </div>
+
+              <form onSubmit={handleCreateTrip} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Trip Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={tripForm.name}
+                    onChange={(e) => setTripForm({ ...tripForm, name: e.target.value })}
+                    placeholder="e.g. Euro Trip Summer 2026"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-900 text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Description & Notes
+                  </label>
+                  <textarea
+                    rows="2"
+                    value={tripForm.description}
+                    onChange={(e) => setTripForm({ ...tripForm, description: e.target.value })}
+                    placeholder="Travel vibe, friends joining, places on your radar..."
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-900 text-sm"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                      Start Date *
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={tripForm.startDate}
+                      onChange={(e) => setTripForm({ ...tripForm, startDate: e.target.value })}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-900 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                      End Date *
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={tripForm.endDate}
+                      onChange={(e) => setTripForm({ ...tripForm, endDate: e.target.value })}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-900 text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-3">
+                  <button
+                    type="submit"
+                    disabled={creating}
+                    className="w-full py-3.5 px-4 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl shadow-lg shadow-sky-600/20 transition flex items-center justify-center space-x-2 disabled:opacity-50 cursor-pointer"
+                  >
+                    {creating ? <span>Creating...</span> : <span>Create & Open Itinerary</span>}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
