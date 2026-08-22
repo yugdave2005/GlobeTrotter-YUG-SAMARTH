@@ -758,7 +758,8 @@ export default function ItineraryBuilder() {
           }
         });
 
-        y = doc.previousAutoTable.finalY + 4;
+        const finalTableY = doc.lastAutoTable?.finalY || doc.previousAutoTable?.finalY || (y + tableData.length * 8 + 14);
+        y = finalTableY + 4;
 
         // Stop Total Row
         doc.setFillColor(241, 245, 249);
