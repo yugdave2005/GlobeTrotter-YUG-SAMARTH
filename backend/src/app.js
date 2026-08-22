@@ -1,20 +1,16 @@
 import express from 'express';
 import cors from 'cors';
+import routes from './routes/index.js';
 
 const app = express();
 
-// Middlewares
 app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-// Basic route
-app.get('/', (req, res) => {
-  res.send('API is running...');
+app.use('/api', routes);
+
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', service: 'monolith-backend' });
 });
-
-// Import and use routes here
-// import authRoutes from './routes/authRoutes.js';
-// app.use('/api/auth', authRoutes);
 
 export default app;
