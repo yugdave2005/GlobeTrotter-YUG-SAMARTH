@@ -20,12 +20,12 @@ const NEARBY_REGIONS = [
     name: 'Kerala & South India',
     keywords: ['kerala', 'munnar', 'alleppey', 'kochi', 'cochin', 'wayanad', 'varkala', 'thekkady', 'kovalam'],
     cities: [
-      { name: 'Kochi (Cochin)', country: 'India', subtitle: 'Fort Kochi & Chinese Fishing Nets', defaultCost: 1500 },
-      { name: 'Munnar', country: 'India', subtitle: 'Tea Plantations & Misty Hills', defaultCost: 1800 },
-      { name: 'Alleppey (Alappuzha)', country: 'India', subtitle: 'Backwaters Houseboat Cruise', defaultCost: 4500 },
-      { name: 'Thekkady (Periyar)', country: 'India', subtitle: 'Spice Gardens & Elephant Reserve', defaultCost: 2200 },
-      { name: 'Varkala Beach', country: 'India', subtitle: 'Red Cliff Beaches & Sunset Cafes', defaultCost: 1200 },
-      { name: 'Wayanad', country: 'India', subtitle: 'Edakkal Caves & Waterfalls', defaultCost: 1600 },
+      { name: 'Munnar', country: 'India', subtitle: 'Tea Plantations, Misty Hills & Viewpoints', defaultCost: 1800 },
+      { name: 'Alleppey (Alappuzha)', country: 'India', subtitle: 'Backwaters Houseboat Cruise & Canals', defaultCost: 4500 },
+      { name: 'Kochi (Cochin)', country: 'India', subtitle: 'Fort Kochi, Chinese Nets & Kathakali', defaultCost: 1500 },
+      { name: 'Thekkady (Periyar)', country: 'India', subtitle: 'Periyar Wildlife Sanctuary & Spices', defaultCost: 2200 },
+      { name: 'Varkala Beach', country: 'India', subtitle: 'Red Cliff Beaches, Yoga & Sunset Cafes', defaultCost: 1200 },
+      { name: 'Wayanad', country: 'India', subtitle: 'Edakkal Caves, Waterfalls & Forest Treks', defaultCost: 1600 },
       { name: 'Kovalam', country: 'India', subtitle: 'Lighthouse Beach & Ayurvedic Spas', defaultCost: 2000 }
     ]
   },
@@ -85,9 +85,7 @@ const NEARBY_REGIONS = [
       { name: 'Paris', country: 'France', subtitle: 'Eiffel Tower & Louvre Museum', defaultCost: 4500 },
       { name: 'Rome', country: 'Italy', subtitle: 'Colosseum & Vatican Museums', defaultCost: 4200 },
       { name: 'Barcelona', country: 'Spain', subtitle: 'Sagrada Familia & Gothic Quarter', defaultCost: 3800 },
-      { name: 'Amsterdam', country: 'Netherlands', subtitle: 'Canal Cruises & Van Gogh Museum', defaultCost: 4000 },
-      { name: 'Venice', country: 'Italy', subtitle: 'Gondola Rides & St. Marks Square', defaultCost: 5000 },
-      { name: 'Florence', country: 'Italy', subtitle: 'Duomo & Uffizi Gallery Art', defaultCost: 3600 }
+      { name: 'Amsterdam', country: 'Netherlands', subtitle: 'Canal Cruises & Van Gogh Museum', defaultCost: 4000 }
     ]
   },
   {
@@ -97,43 +95,77 @@ const NEARBY_REGIONS = [
     cities: [
       { name: 'Tokyo', country: 'Japan', subtitle: 'Shibuya Crossing & Meiji Shrine', defaultCost: 4800 },
       { name: 'Kyoto', country: 'Japan', subtitle: 'Fushimi Inari & Arashiyama Bamboo', defaultCost: 4200 },
-      { name: 'Osaka', country: 'Japan', subtitle: 'Dotonbori Street Food & Osaka Castle', defaultCost: 3900 },
-      { name: 'Hakone & Mt. Fuji', country: 'Japan', subtitle: 'Thermal Onsens & Mt. Fuji Views', defaultCost: 5500 }
+      { name: 'Osaka', country: 'Japan', subtitle: 'Dotonbori Street Food & Osaka Castle', defaultCost: 3900 }
     ]
   }
 ];
 
 // Curated activity suggestions per place
 const PLACE_ACTIVITIES = {
-  kerala: [
-    { name: 'Alleppey Backwaters Houseboat Day Cruise & Sadya Lunch', category: 'RELAXATION', cost: 4500, duration: '5 hrs' },
-    { name: 'Munnar Kolukkumalai Sunrise Jeep Safari', category: 'ADVENTURE', cost: 2200, duration: '3.5 hrs' },
-    { name: 'Traditional Ayurvedic Full-Body Abhyanga Massage', category: 'RELAXATION', cost: 2500, duration: '1.5 hrs' },
-    { name: 'Fort Kochi Kathakali Dance & Martial Arts Show', category: 'SIGHTSEEING', cost: 800, duration: '2 hrs' },
-    { name: 'Periyar Wildlife Sanctuary Bamboo Rafting & Trek', category: 'ADVENTURE', cost: 2800, duration: '4 hrs' },
-    { name: 'Varkala Cliffside Seafood & Sunset Dinner', category: 'FOOD', cost: 1400, duration: '2 hrs' }
+  munnar: [
+    { name: 'Munnar Kolukkumalai Sunrise 4x4 Jeep Safari', category: 'ADVENTURE', cost: 2200, duration: '3.5 hrs' },
+    { name: 'Lockhart Tea Plantations & Heritage Factory Trek', category: 'ADVENTURE', cost: 1000, duration: '2.5 hrs' },
+    { name: 'Eravikulam National Park Nilgiri Tahr Safari', category: 'SIGHTSEEING', cost: 850, duration: '3 hrs' },
+    { name: 'Attukal Waterfalls Nature Trail & Picnic', category: 'RELAXATION', cost: 600, duration: '2 hrs' },
+    { name: 'Top Station Sunset Viewpoint & Cloud Valley Tour', category: 'SIGHTSEEING', cost: 1200, duration: '2.5 hrs' }
   ],
-  rajasthan: [
-    { name: 'Amber Fort Elephant & Sheesh Mahal Heritage Tour', category: 'SIGHTSEEING', cost: 1200, duration: '3 hrs' },
-    { name: 'Lake Pichola Sunset Luxury Catamaran Cruise', category: 'RELAXATION', cost: 1500, duration: '1.5 hrs' },
+  alleppey: [
+    { name: 'Alleppey Backwaters Houseboat Day Cruise & Traditional Sadya Lunch', category: 'RELAXATION', cost: 4500, duration: '5 hrs' },
+    { name: 'Punnamada Lake Kayaking & Village Canal Exploration', category: 'ADVENTURE', cost: 1500, duration: '2.5 hrs' },
+    { name: 'Marari Beach Sunset Seafood Dinner & Coconut Groves Walk', category: 'FOOD', cost: 1200, duration: '2 hrs' },
+    { name: 'Alappuzha Lighthouse & Historic Pier Walk', category: 'SIGHTSEEING', cost: 400, duration: '1.5 hrs' }
+  ],
+  kochi: [
+    { name: 'Fort Kochi Kathakali Dance & Kalaripayattu Martial Arts Show', category: 'SIGHTSEEING', cost: 800, duration: '2 hrs' },
+    { name: 'Chinese Fishing Nets Sunset Cruise & Street Food Trail', category: 'FOOD', cost: 950, duration: '2 hrs' },
+    { name: 'Mattancherry Palace & Jew Town Antique Bazaar Walking Tour', category: 'SIGHTSEEING', cost: 700, duration: '2.5 hrs' },
+    { name: 'Traditional Ayurvedic Full-Body Abhyanga Massage', category: 'RELAXATION', cost: 2500, duration: '1.5 hrs' }
+  ],
+  thekkady: [
+    { name: 'Periyar Wildlife Sanctuary Bamboo Rafting & Jungle Trek', category: 'ADVENTURE', cost: 2800, duration: '4 hrs' },
+    { name: 'Organic Spice Garden Tour & Elephant Bathing Experience', category: 'SIGHTSEEING', cost: 1200, duration: '2 hrs' },
+    { name: 'Periyar Lake Boat Safari for Wild Elephant Sightings', category: 'ADVENTURE', cost: 800, duration: '2 hrs' }
+  ],
+  varkala: [
+    { name: 'Varkala Red Cliffside Sunset Dinner & Live Music', category: 'FOOD', cost: 1400, duration: '2.5 hrs' },
+    { name: 'Papanasam Beach Morning Yoga & Surfing Lesson', category: 'ADVENTURE', cost: 1600, duration: '2 hrs' },
+    { name: 'Janardhana Swamy 2000-Year-Old Temple Heritage Walk', category: 'SIGHTSEEING', cost: 500, duration: '1.5 hrs' }
+  ],
+  jaipur: [
+    { name: 'Amber Fort & Sheesh Mahal Royal Heritage Tour', category: 'SIGHTSEEING', cost: 1200, duration: '3 hrs' },
+    { name: 'Hawa Mahal & Old Pink City Bazaars Street Food Safari', category: 'FOOD', cost: 950, duration: '2.5 hrs' },
     { name: 'Chokhi Dhani Cultural Village Rajasthani Feast', category: 'FOOD', cost: 1600, duration: '3 hrs' },
-    { name: 'Jaisalmer Sam Dunes Camel Safari & Camp Night', category: 'ADVENTURE', cost: 2800, duration: '5 hrs' },
-    { name: 'Mehrangarh Fort Zipline Flying Fox Experience', category: 'ADVENTURE', cost: 2100, duration: '2 hrs' }
+    { name: 'Nahargarh Fort Sunset Panorama & Heritage Cafe', category: 'RELAXATION', cost: 850, duration: '2 hrs' }
+  ],
+  udaipur: [
+    { name: 'Lake Pichola Sunset Luxury Catamaran Boat Cruise', category: 'RELAXATION', cost: 1500, duration: '1.5 hrs' },
+    { name: 'City Palace Museum & Crystal Gallery Royal Walk', category: 'SIGHTSEEING', cost: 1100, duration: '3 hrs' },
+    { name: 'Bagore Ki Haveli Dharohar Folk Dance & Puppet Show', category: 'SIGHTSEEING', cost: 650, duration: '1.5 hrs' },
+    { name: 'Rooftop Candlelight Dinner Overlooking Lake Palace', category: 'FOOD', cost: 2200, duration: '2 hrs' }
+  ],
+  jodhpur: [
+    { name: 'Mehrangarh Fort Zipline Flying Fox Experience', category: 'ADVENTURE', cost: 2100, duration: '2 hrs' },
+    { name: 'Blue City Brahmin Street Walk & Mirchi Vada Tasting', category: 'FOOD', cost: 600, duration: '2 hrs' },
+    { name: 'Jaswant Thada & Umaid Bhawan Palace Tour', category: 'SIGHTSEEING', cost: 850, duration: '2.5 hrs' }
+  ],
+  jaisalmer: [
+    { name: 'Sam Sand Dunes Camel Safari & Thar Desert Camping', category: 'ADVENTURE', cost: 2800, duration: '5 hrs' },
+    { name: 'Jaisalmer Golden Fort & Living Fortress Haveli Walk', category: 'SIGHTSEEING', cost: 900, duration: '3 hrs' }
   ],
   goa: [
-    { name: 'Grand Island Scuba Diving & 5-in-1 Watersports', category: 'ADVENTURE', cost: 3500, duration: '4 hrs' },
+    { name: 'Grand Island Scuba Diving & 5-in-1 Watersports Combo', category: 'ADVENTURE', cost: 3500, duration: '4 hrs' },
     { name: 'Mandovi Luxury Sunset River Cruise with Goan Folk Dance', category: 'RELAXATION', cost: 1200, duration: '2 hrs' },
-    { name: 'Fontainhas Latin Quarter Walking & Bakery Tour', category: 'FOOD', cost: 900, duration: '2 hrs' },
-    { name: 'Anjuna Beachside Seafood Grill & Cocktail Evening', category: 'FOOD', cost: 1800, duration: '2.5 hrs' }
+    { name: 'Fontainhas Latin Quarter Walking & Traditional Portuguese Bakery Tour', category: 'FOOD', cost: 900, duration: '2 hrs' },
+    { name: 'Anjuna & Vagator Beachside Seafood Grill & Cocktail Evening', category: 'FOOD', cost: 1800, duration: '2.5 hrs' }
   ],
-  himachal: [
+  manali: [
     { name: 'Solang Valley High-Altitude Tandem Paragliding', category: 'ADVENTURE', cost: 3200, duration: '2 hrs' },
-    { name: 'Rohtang Pass & Atal Tunnel Snow Excursion', category: 'ADVENTURE', cost: 2800, duration: '4 hrs' },
-    { name: 'Old Manali Riverside Trout Fish & Woodfired Pizza', category: 'FOOD', cost: 1200, duration: '2 hrs' },
-    { name: 'Jogini Waterfall Guided Hike & Nature Picnic', category: 'RELAXATION', cost: 800, duration: '3 hrs' }
+    { name: 'Rohtang Pass & Atal Tunnel Snow & Mountain Excursion', category: 'ADVENTURE', cost: 2800, duration: '4 hrs' },
+    { name: 'Old Manali Riverside Fresh Trout Fish & Woodfired Pizza', category: 'FOOD', cost: 1200, duration: '2 hrs' },
+    { name: 'Jogini Waterfall Guided Hike & Himalayan Nature Trail', category: 'RELAXATION', cost: 800, duration: '3 hrs' }
   ],
   default: [
-    { name: 'City Heritage Landmark & Architecture Walking Tour', category: 'SIGHTSEEING', cost: 1200, duration: '3 hrs' },
+    { name: 'City Heritage Landmark & Historic Architecture Walking Tour', category: 'SIGHTSEEING', cost: 1200, duration: '3 hrs' },
     { name: 'Authentic Local Cuisine Tasting & Street Food Safari', category: 'FOOD', cost: 1100, duration: '2 hrs' },
     { name: 'Panoramic Sunset Viewpoint & Cultural Performance', category: 'RELAXATION', cost: 950, duration: '2 hrs' },
     { name: 'Outdoor Nature Hike & Adventure Activity', category: 'ADVENTURE', cost: 2200, duration: '3 hrs' }
@@ -176,6 +208,17 @@ export default function ItineraryBuilder() {
     scheduledTime: '',
     customCost: 1500,
     category: 'SIGHTSEEING'
+  });
+
+  // Modal for confirming deletions (Trip, Stop, Activity)
+  const [deleteConfirmModal, setDeleteConfirmModal] = useState({
+    isOpen: false,
+    type: '',
+    id: null,
+    secondaryId: null,
+    cost: 0,
+    title: '',
+    description: ''
   });
 
   useEffect(() => {
@@ -267,7 +310,6 @@ export default function ItineraryBuilder() {
       setTrip(data);
       setBudgetInput(data.budget || 50000);
     } catch (err) {
-      // Fallback mock trip
       setTrip({
         id: tripId,
         name: 'Kerala Backwaters & Hills Tour 🌴',
@@ -281,22 +323,17 @@ export default function ItineraryBuilder() {
           {
             id: 'stop-kerala-1',
             city: {
-              name: 'Kerala (Munnar & Alleppey)',
+              name: 'Kochi (Cochin)',
               country: 'India',
               imageUrl: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&q=80&w=800'
             },
             arrivalDate: '2026-08-22',
-            departureDate: '2026-08-27',
+            departureDate: '2026-08-24',
             activities: [
               {
                 id: 'act-k1',
-                activity: { name: 'Alleppey Backwaters Houseboat Day Cruise', category: 'RELAXATION', cost: 4500, durationMinutes: 300 },
-                customCost: 4500
-              },
-              {
-                id: 'act-k2',
-                activity: { name: 'Munnar Tea Plantations & Factory Trek', category: 'ADVENTURE', cost: 1000, durationMinutes: 150 },
-                customCost: 1000
+                activity: { name: 'Fort Kochi Kathakali Dance & Martial Arts Show', category: 'SIGHTSEEING', cost: 800, durationMinutes: 120 },
+                customCost: 800
               }
             ]
           }
@@ -348,17 +385,6 @@ export default function ItineraryBuilder() {
   const remainingBudget = tripBudget - totalCost;
   const budgetPercentUsed = Math.min(Math.round((totalCost / tripBudget) * 100), 100);
   const isOverBudget = remainingBudget < 0;
-
-  // Modal for confirming deletions (Trip, Stop, Activity)
-  const [deleteConfirmModal, setDeleteConfirmModal] = useState({
-    isOpen: false,
-    type: '',
-    id: null,
-    secondaryId: null,
-    cost: 0,
-    title: '',
-    description: ''
-  });
 
   // Toggle Collapse on a Stop
   const toggleStopCollapse = (stopId) => {
@@ -445,9 +471,58 @@ export default function ItineraryBuilder() {
     }
   };
 
+  // Strict date validation handler when adding a stop
   const handleAddStop = async (e) => {
     e.preventDefault();
-    const targetCityName = stopForm.cityName || 'New Stop';
+    const targetCityName = stopForm.cityName || 'New Destination';
+
+    if (!stopForm.arrivalDate || !stopForm.departureDate) {
+      toast.error('Please specify both Arrival and Departure dates.');
+      return;
+    }
+
+    const tripStartStr = trip?.startDate ? trip.startDate.split('T')[0] : '';
+    const tripEndStr = trip?.endDate ? trip.endDate.split('T')[0] : '';
+    const arrivalTime = new Date(stopForm.arrivalDate).getTime();
+    const departureTime = new Date(stopForm.departureDate).getTime();
+    const tripStartTime = new Date(tripStartStr).getTime();
+    const tripEndTime = new Date(tripEndStr).getTime();
+
+    // 1. Validate Departure >= Arrival
+    if (departureTime < arrivalTime) {
+      toast.error('⚠️ Departure date cannot be before Arrival date.');
+      return;
+    }
+
+    // 2. Validate Stop Dates are within overall Trip bounds
+    if (tripStartStr && arrivalTime < tripStartTime) {
+      toast.error(`⚠️ Arrival date cannot be before Trip Start Date (${new Date(trip.startDate).toLocaleDateString()}).`);
+      return;
+    }
+    if (tripEndStr && departureTime > tripEndTime) {
+      toast.error(`⚠️ Departure date cannot exceed Trip End Date (${new Date(trip.endDate).toLocaleDateString()}).`);
+      return;
+    }
+
+    // 3. Validate Date Overlap with Existing Stops in this Trip
+    const overlappingStop = (trip?.stops || []).find(existingStop => {
+      const existArrStr = existingStop.arrivalDate ? existingStop.arrivalDate.split('T')[0] : '';
+      const existDepStr = existingStop.departureDate ? existingStop.departureDate.split('T')[0] : '';
+      if (!existArrStr || !existDepStr) return false;
+
+      const existArr = new Date(existArrStr).getTime();
+      const existDep = new Date(existDepStr).getTime();
+
+      // Overlap condition: new Arrival < existing Departure AND new Departure > existing Arrival
+      return arrivalTime < existDep && departureTime > existArr;
+    });
+
+    if (overlappingStop) {
+      const existArrStr = new Date(overlappingStop.arrivalDate).toLocaleDateString();
+      const existDepStr = new Date(overlappingStop.departureDate).toLocaleDateString();
+      toast.error(`❌ Date Conflict! Selected dates (${new Date(stopForm.arrivalDate).toLocaleDateString()} – ${new Date(stopForm.departureDate).toLocaleDateString()}) overlap with existing stop "${overlappingStop.city?.name || 'Stop'}" (${existArrStr} – ${existDepStr}). Please choose non-overlapping dates.`);
+      return;
+    }
 
     try {
       let targetCityId = stopForm.cityId;
@@ -461,8 +536,8 @@ export default function ItineraryBuilder() {
       const payload = {
         cityId: targetCityId,
         cityName: targetCityName,
-        arrivalDate: stopForm.arrivalDate || trip?.startDate || new Date().toISOString(),
-        departureDate: stopForm.departureDate || trip?.endDate || new Date(Date.now() + 2 * 86400000).toISOString(),
+        arrivalDate: stopForm.arrivalDate,
+        departureDate: stopForm.departureDate,
         sortOrder: (trip?.stops?.length || 0) + 1
       };
 
@@ -493,8 +568,8 @@ export default function ItineraryBuilder() {
       const localStop = {
         id: `stop-${Date.now()}`,
         city: chosenCity,
-        arrivalDate: stopForm.arrivalDate || trip?.startDate,
-        departureDate: stopForm.departureDate || trip?.endDate,
+        arrivalDate: stopForm.arrivalDate,
+        departureDate: stopForm.departureDate,
         activities: []
       };
       setTrip(prev => {
@@ -629,27 +704,6 @@ export default function ItineraryBuilder() {
     toast.success(`Activity added! ₹${costNum.toLocaleString('en-IN')} deducted from budget. 💸`);
   };
 
-  const handleDeleteActivity = async (stopId, actId, actCost) => {
-    try {
-      await api.delete(`/core/trips/${tripId}/stops/${stopId}/activities/${actId}`);
-    } catch (e) {
-      console.log('Deleted locally');
-    }
-    setTrip(prev => ({
-      ...prev,
-      stops: prev.stops.map(s => {
-        if (s.id === stopId) {
-          return {
-            ...s,
-            activities: s.activities.filter(a => a.id !== actId)
-          };
-        }
-        return s;
-      })
-    }));
-    toast.success(`Activity removed. ₹${Number(actCost || 0).toLocaleString('en-IN')} restored to budget! 💰`);
-  };
-
   const handleSaveBudget = async (e) => {
     e.preventDefault();
     try {
@@ -687,8 +741,11 @@ export default function ItineraryBuilder() {
   const activeCityName = activeStop?.city?.name || 'this destination';
 
   // Retrieve suggested activities for this active place
-  const activePlaceKey = Object.keys(PLACE_ACTIVITIES).find(k => activeCityName.toLowerCase().includes(k)) || matchedRegion.id;
+  const activePlaceKey = Object.keys(PLACE_ACTIVITIES).find(k => activeCityName.toLowerCase().includes(k)) || 'default';
   const suggestedActivitiesForActivePlace = PLACE_ACTIVITIES[activePlaceKey] || PLACE_ACTIVITIES.default;
+
+  const tripStartFormatted = trip?.startDate ? trip.startDate.split('T')[0] : '';
+  const tripEndFormatted = trip?.endDate ? trip.endDate.split('T')[0] : '';
 
   return (
     <div className="space-y-8 pb-16">
@@ -801,6 +858,14 @@ export default function ItineraryBuilder() {
                   if (!isNaN(lastDepTime)) {
                     nextArrival = new Date(lastDepTime).toISOString().split('T')[0];
                     nextDeparture = new Date(lastDepTime + 2 * 86400000).toISOString().split('T')[0];
+                    
+                    // Cap departure at trip.endDate if defined
+                    if (trip?.endDate) {
+                      const tripEndTime = new Date(trip.endDate).getTime();
+                      if (new Date(nextDeparture).getTime() > tripEndTime) {
+                        nextDeparture = trip.endDate.split('T')[0];
+                      }
+                    }
                   }
                 }
               }
@@ -849,19 +914,16 @@ export default function ItineraryBuilder() {
           </div>
 
           <div className="flex items-center gap-3 self-start sm:self-auto">
-            {/* Total Budget Pill */}
             <div className="bg-slate-50 p-3 px-4 rounded-2xl border border-slate-100">
               <span className="text-[10px] font-bold uppercase text-slate-400 block">Total Budget</span>
               <span className="text-base font-extrabold text-slate-900">₹{tripBudget.toLocaleString('en-IN')}</span>
             </div>
 
-            {/* Spent on Activities Pill */}
             <div className="bg-amber-50 p-3 px-4 rounded-2xl border border-amber-100">
               <span className="text-[10px] font-bold uppercase text-amber-600 block">Activities Total</span>
               <span className="text-base font-extrabold text-amber-700">-₹{totalCost.toLocaleString('en-IN')}</span>
             </div>
 
-            {/* Remaining Balance Pill */}
             <div className={`p-3 px-4 rounded-2xl border ${
               isOverBudget ? 'bg-rose-50 border-rose-200 text-rose-700' : 'bg-emerald-50 border-emerald-200 text-emerald-700'
             }`}>
@@ -1101,7 +1163,7 @@ export default function ItineraryBuilder() {
         </div>
       )}
 
-      {/* Add Stop Modal with Intelligent Nearby Places Filtering */}
+      {/* Add Stop Modal with Validation Feedback & Date Range Guardrails */}
       <AnimatePresence>
         {isAddStopOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -1117,7 +1179,7 @@ export default function ItineraryBuilder() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-100 p-8 z-10"
+              className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-100 p-8 z-10 max-h-[90vh] overflow-y-auto"
             >
               <button 
                 onClick={() => setIsAddStopOpen(false)}
@@ -1132,12 +1194,31 @@ export default function ItineraryBuilder() {
                 </div>
                 <h3 className="text-2xl font-bold text-slate-900">Add Destination Stop</h3>
               </div>
-              <p className="text-xs text-slate-500 mb-5">
-                Showing nearby places for <span className="font-bold text-slate-800">{matchedRegion.name}</span>
-              </p>
+              
+              {/* Trip Boundary Info Badge */}
+              <div className="bg-sky-50/80 border border-sky-100 p-3 rounded-2xl mb-4 flex items-center justify-between text-xs text-sky-800">
+                <span className="font-semibold">Trip Duration Bounds:</span>
+                <span className="font-extrabold">{new Date(trip?.startDate).toLocaleDateString()} to {new Date(trip?.endDate).toLocaleDateString()}</span>
+              </div>
+
+              {/* Already Booked Stop Windows */}
+              {trip?.stops && trip.stops.length > 0 && (
+                <div className="mb-4 space-y-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                    Occupied Stop Windows (Cannot Overlap):
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {trip.stops.map((s, idx) => (
+                      <span key={idx} className="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg text-[11px] font-semibold border border-slate-200/60">
+                        {s.city?.name}: {new Date(s.arrivalDate).toLocaleDateString()} - {new Date(s.departureDate).toLocaleDateString()}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* 1-Click Recommended Nearby Place Chips */}
-              <div className="mb-5 space-y-2">
+              <div className="mb-4 space-y-2">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
                   ✨ Quick-Pick Nearby Places in {matchedRegion.name}:
                 </span>
@@ -1157,7 +1238,7 @@ export default function ItineraryBuilder() {
                       }}
                       className={`p-2.5 rounded-xl border text-left text-xs transition cursor-pointer ${
                         stopForm.cityName === place.name
-                          ? 'bg-sky-50 border-sky-400 text-sky-800 font-bold'
+                          ? 'bg-sky-50 border-sky-400 text-sky-800 font-bold ring-1 ring-sky-400'
                           : 'bg-slate-50 hover:bg-slate-100 border-slate-200/70 text-slate-700'
                       }`}
                     >
@@ -1194,17 +1275,17 @@ export default function ItineraryBuilder() {
                         });
                       }
                     }}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-900 text-sm font-medium"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-900 text-sm font-bold"
                     required
                   >
-                    <optgroup label={`⭐ Nearby to ${matchedRegion.name}`}>
+                    <optgroup label={`⭐ Nearby Places for ${matchedRegion.name}`}>
                       {nearbySuggestedPlaces.map((place, idx) => (
                         <option key={`nearby-${idx}`} value={place.name}>
                           {place.name} ({place.subtitle})
                         </option>
                       ))}
                     </optgroup>
-                    <optgroup label="🌐 All Available Cities">
+                    <optgroup label="🌐 Other Available Cities">
                       {cities.map((city) => (
                         <option key={city.id} value={city.id}>
                           {city.name}, {city.country}
@@ -1217,26 +1298,30 @@ export default function ItineraryBuilder() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                      Arrival Date
+                      Arrival Date *
                     </label>
                     <input
                       type="date"
                       required
+                      min={tripStartFormatted}
+                      max={tripEndFormatted}
                       value={stopForm.arrivalDate}
                       onChange={(e) => setStopForm({ ...stopForm, arrivalDate: e.target.value })}
-                      className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs"
+                      className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold"
                     />
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                      Departure Date
+                      Departure Date *
                     </label>
                     <input
                       type="date"
                       required
+                      min={stopForm.arrivalDate || tripStartFormatted}
+                      max={tripEndFormatted}
                       value={stopForm.departureDate}
                       onChange={(e) => setStopForm({ ...stopForm, departureDate: e.target.value })}
-                      className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs"
+                      className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold"
                     />
                   </div>
                 </div>
@@ -1451,7 +1536,6 @@ export default function ItineraryBuilder() {
                   />
                 </div>
 
-                {/* Preset Chips */}
                 <div className="flex flex-wrap gap-2">
                   {[35000, 50000, 75000, 120000, 160000].map((amt) => (
                     <button
