@@ -8,7 +8,6 @@ const navItems = [
   { name: 'My Trips', icon: Map, path: '/dashboard/trips' },
   { name: 'Discover', icon: Compass, path: '/dashboard/discover' },
   { name: 'Budget', icon: Wallet, path: '/dashboard/budget' },
-  { name: 'Community', icon: Users, path: '/dashboard/community' },
 ];
 
 export const Sidebar = ({ onSettingsClick }) => {

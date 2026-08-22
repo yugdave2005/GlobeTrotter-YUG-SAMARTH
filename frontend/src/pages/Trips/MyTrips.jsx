@@ -8,6 +8,7 @@ import {
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
 import { SmartItineraryPlannerModal } from '../../components/SmartItineraryPlannerModal';
+import ConfirmDeleteModal from '../../components/ConfirmDeleteModal';
 
 const DUMMY_TRIPS = [
   {
@@ -113,15 +114,29 @@ export default function MyTrips() {
     }
   };
 
-  const handleDeleteTrip = async (e, tripId) => {
+  const [deleteModal, setDeleteModal] = useState({
+    isOpen: false,
+    tripId: null,
+    tripName: ''
+  });
+
+  const handleDeleteTripClick = (e, trip) => {
     e.stopPropagation();
-    if (!window.confirm('Are you sure you want to delete this trip itinerary?')) return;
+    setDeleteModal({
+      isOpen: true,
+      tripId: trip.id,
+      tripName: trip.name
+    });
+  };
+
+  const handleConfirmDeleteTrip = async () => {
+    if (!deleteModal.tripId) return;
     try {
-      await api.delete(`/core/trips/${tripId}`);
-      setTrips(prev => prev.filter(t => t.id !== tripId));
+      await api.delete(`/core/trips/${deleteModal.tripId}`);
+      setTrips(prev => prev.filter(t => t.id !== deleteModal.tripId));
       toast.success('Trip deleted successfully');
     } catch (err) {
-      setTrips(prev => prev.filter(t => t.id !== tripId));
+      setTrips(prev => prev.filter(t => t.id !== deleteModal.tripId));
       toast.success('Trip removed');
     }
   };
@@ -239,8 +254,8 @@ export default function MyTrips() {
                     {trip.status || 'Active Plan'}
                   </span>
                   <button
-                    onClick={(e) => handleDeleteTrip(e, trip.id)}
-                    className="p-1.5 bg-white/90 hover:bg-rose-500 hover:text-white backdrop-blur-md text-slate-500 rounded-full shadow-sm transition"
+                    onClick={(e) => handleDeleteTripClick(e, trip)}
+                    className="p-1.5 bg-white/90 hover:bg-rose-500 hover:text-white backdrop-blur-md text-slate-500 rounded-full shadow-sm transition cursor-pointer"
                     title="Delete Trip"
                   >
                     <Trash2 size={13} />
@@ -440,6 +455,15 @@ export default function MyTrips() {
         isOpen={isSmartPlannerOpen}
         onClose={() => setIsSmartPlannerOpen(false)}
         onItineraryCreated={(newTrip) => setTrips(prev => [newTrip, ...prev])}
+      />
+
+      {/* Custom Animated Delete Confirmation Modal */}
+      <ConfirmDeleteModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={handleConfirmDeleteTrip}
+        title="Delete Trip Itinerary"
+        description={`Are you sure you want to delete "${deleteModal.tripName}"? All destination stops and scheduled activities will be permanently removed.`}
       />
 
     </div>

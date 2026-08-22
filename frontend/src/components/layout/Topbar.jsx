@@ -110,19 +110,9 @@ export const Topbar = ({ onSettingsClick, user, onLogout }) => {
   };
 
   return (
-    <header className="h-24 px-8 md:px-10 flex items-center justify-between relative z-30">
-      {/* Search Bar */}
-      <div className="flex-1 max-w-2xl relative">
-        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400" size={20} />
-        <input 
-          type="text" 
-          placeholder="Search destinations, trips, activities, or budgets..." 
-          className="w-full pl-12 pr-4 py-3 bg-white border border-slate-100/80 rounded-full shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary-500/40 text-slate-800 text-sm font-medium transition-all"
-        />
-      </div>
-
+    <header className="h-20 px-8 md:px-10 flex items-center justify-end relative z-30">
       {/* User Actions & Notifications */}
-      <div className="flex items-center space-x-4 md:space-x-5 ml-6">
+      <div className="flex items-center space-x-4 md:space-x-5">
         
         {/* Notification Bell */}
         <div className="relative" ref={notificationRef}>

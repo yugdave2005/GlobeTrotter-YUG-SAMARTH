@@ -11,6 +11,7 @@ import {
 import api from '../../utils/api';
 import { useSocket } from '../../context/SocketContext';
 import toast from 'react-hot-toast';
+import ConfirmDeleteModal from '../../components/ConfirmDeleteModal';
 
 // Curated dictionary of nearby destinations by region / hub
 const NEARBY_REGIONS = [
@@ -348,6 +349,17 @@ export default function ItineraryBuilder() {
   const budgetPercentUsed = Math.min(Math.round((totalCost / tripBudget) * 100), 100);
   const isOverBudget = remainingBudget < 0;
 
+  // Modal for confirming deletions (Trip, Stop, Activity)
+  const [deleteConfirmModal, setDeleteConfirmModal] = useState({
+    isOpen: false,
+    type: '',
+    id: null,
+    secondaryId: null,
+    cost: 0,
+    title: '',
+    description: ''
+  });
+
   // Toggle Collapse on a Stop
   const toggleStopCollapse = (stopId) => {
     setCollapsedStops(prev => ({
@@ -356,31 +368,80 @@ export default function ItineraryBuilder() {
     }));
   };
 
-  // Delete Stop (Hold)
-  const handleDeleteStop = async (stopId) => {
-    if (!window.confirm('Delete this destination stop and its scheduled activities?')) return;
-    try {
-      await api.delete(`/core/trips/${tripId}/stops/${stopId}`);
-    } catch (e) {
-      console.log('Deleted stop locally');
-    }
-    setTrip(prev => ({
-      ...prev,
-      stops: prev.stops.filter(s => s.id !== stopId)
-    }));
-    toast.success('Destination stop deleted!');
+  const requestDeleteCurrentTrip = () => {
+    setDeleteConfirmModal({
+      isOpen: true,
+      type: 'trip',
+      title: 'Delete Entire Trip Itinerary',
+      description: `Are you sure you want to permanently delete "${trip?.name}"? All destination stops and activities will be removed.`
+    });
   };
 
-  // Delete Trip
-  const handleDeleteCurrentTrip = async () => {
-    if (!window.confirm('Are you sure you want to permanently delete this entire trip?')) return;
-    try {
-      await api.delete(`/core/trips/${tripId}`);
-      toast.success('Trip deleted successfully');
-      navigate('/dashboard/trips');
-    } catch (err) {
-      toast.success('Trip deleted');
-      navigate('/dashboard/trips');
+  const requestDeleteStop = (stop) => {
+    setDeleteConfirmModal({
+      isOpen: true,
+      type: 'stop',
+      id: stop.id,
+      title: `Delete Stop (${stop.city?.name || 'Destination'})`,
+      description: `Are you sure you want to delete ${stop.city?.name || 'this destination stop'} and all its activities?`
+    });
+  };
+
+  const requestDeleteActivity = (stopId, act) => {
+    const actCost = act.customCost || act.activity?.cost || 0;
+    setDeleteConfirmModal({
+      isOpen: true,
+      type: 'activity',
+      id: stopId,
+      secondaryId: act.id,
+      cost: actCost,
+      title: 'Delete Activity',
+      description: `Are you sure you want to delete "${act.activity?.name}"? ₹${Number(actCost).toLocaleString('en-IN')} will be restored to your trip budget.`
+    });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (deleteConfirmModal.type === 'trip') {
+      try {
+        await api.delete(`/core/trips/${tripId}`);
+        toast.success('Trip deleted successfully');
+        navigate('/dashboard/trips');
+      } catch (err) {
+        toast.success('Trip deleted');
+        navigate('/dashboard/trips');
+      }
+    } else if (deleteConfirmModal.type === 'stop') {
+      const stopId = deleteConfirmModal.id;
+      try {
+        await api.delete(`/core/trips/${tripId}/stops/${stopId}`);
+      } catch (e) {
+        console.log('Deleted stop locally');
+      }
+      setTrip(prev => ({
+        ...prev,
+        stops: prev.stops.filter(s => s.id !== stopId)
+      }));
+      toast.success('Destination stop deleted!');
+    } else if (deleteConfirmModal.type === 'activity') {
+      const { id: stopId, secondaryId: actId, cost } = deleteConfirmModal;
+      try {
+        await api.delete(`/core/trips/${tripId}/stops/${stopId}/activities/${actId}`);
+      } catch (e) {
+        console.log('Deleted locally');
+      }
+      setTrip(prev => ({
+        ...prev,
+        stops: prev.stops.map(s => {
+          if (s.id === stopId) {
+            return {
+              ...s,
+              activities: s.activities.filter(a => a.id !== actId)
+            };
+          }
+          return s;
+        })
+      }));
+      toast.success(`Activity removed. ₹${Number(cost || 0).toLocaleString('en-IN')} restored to budget! 💰`);
     }
   };
 
@@ -667,7 +728,7 @@ export default function ItineraryBuilder() {
 
           {/* Delete Trip Action */}
           <button
-            onClick={handleDeleteCurrentTrip}
+            onClick={requestDeleteCurrentTrip}
             className="p-2.5 text-slate-400 hover:text-rose-600 bg-white hover:bg-rose-50 border border-slate-200 hover:border-rose-200 rounded-xl transition cursor-pointer shadow-sm"
             title="Delete this entire trip"
           >
@@ -879,7 +940,7 @@ export default function ItineraryBuilder() {
 
                       {/* Delete Stop (Hold) Action */}
                       <button
-                        onClick={() => handleDeleteStop(stop.id)}
+                        onClick={() => requestDeleteStop(stop)}
                         className="p-2.5 text-slate-400 hover:text-rose-600 bg-white hover:bg-rose-50 border border-slate-200 hover:border-rose-200 rounded-xl transition cursor-pointer shadow-sm"
                         title="Delete this destination stop"
                       >
@@ -930,7 +991,7 @@ export default function ItineraryBuilder() {
                                 <div className="flex items-center space-x-3">
                                   <span className="text-xs text-slate-400 font-medium">Scheduled</span>
                                   <button
-                                    onClick={() => handleDeleteActivity(stop.id, actItem.id, actItem.customCost || actItem.activity?.cost)}
+                                    onClick={() => requestDeleteActivity(stop.id, actItem)}
                                     className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
                                     title="Delete activity and restore budget"
                                   >
@@ -1450,6 +1511,15 @@ export default function ItineraryBuilder() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* 🔴 Custom Animated Delete Confirmation Modal */}
+      <ConfirmDeleteModal
+        isOpen={deleteConfirmModal.isOpen}
+        onClose={() => setDeleteConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={handleConfirmDelete}
+        title={deleteConfirmModal.title}
+        description={deleteConfirmModal.description}
+      />
 
     </div>
   );
