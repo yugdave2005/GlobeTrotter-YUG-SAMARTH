@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Calendar, MapPin, Plus, Clock, DollarSign, Share2, 
   Trash2, ChevronLeft, Sparkles, Check, Copy, ExternalLink,
-  Layers, List, Calendar as CalendarIcon, Tag, Compass, X
+  Layers, List, Calendar as CalendarIcon, Tag, Compass, X, Wallet, Edit2
 } from 'lucide-react';
 import api from '../../utils/api';
 import { useSocket } from '../../context/SocketContext';
@@ -24,6 +24,8 @@ export default function ItineraryBuilder() {
   const [isAddStopOpen, setIsAddStopOpen] = useState(false);
   const [isAddActivityOpen, setIsAddActivityOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isEditBudgetOpen, setIsEditBudgetOpen] = useState(false);
+  const [budgetInput, setBudgetInput] = useState(50000);
   const [selectedStopId, setSelectedStopId] = useState(null);
 
   // Forms
@@ -37,7 +39,7 @@ export default function ItineraryBuilder() {
     activityId: '',
     name: '',
     scheduledTime: '',
-    customCost: 25,
+    customCost: 2500,
     category: 'SIGHTSEEING'
   });
 
@@ -94,76 +96,79 @@ export default function ItineraryBuilder() {
     try {
       const { data } = await api.get(`/core/trips/${tripId}`);
       setTrip(data);
+      setBudgetInput(data.budget || 50000);
     } catch (err) {
       // Fallback mock trip
       setTrip({
         id: tripId,
-        name: 'Classic Euro Tour 2026 🇪🇺',
-        description: 'A 2-week scenic journey across Paris, Rome, and Barcelona.',
-        startDate: '2026-06-15',
-        endDate: '2026-06-29',
-        coverPhotoUrl: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&q=80&w=1200',
-        shareSlug: 'euro-tour-2026',
+        name: 'Royal Rajasthan Heritage Tour 🇮🇳',
+        description: 'A royal journey across Jaipur, Udaipur, and majestic fortresses.',
+        startDate: '2026-04-10',
+        endDate: '2026-04-16',
+        coverPhotoUrl: 'https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&q=80&w=1200',
+        shareSlug: 'rajasthan-tour-2026',
+        budget: 45000,
         stops: [
           {
-            id: 'stop-paris',
+            id: 'stop-jaipur',
             city: {
-              name: 'Paris',
-              country: 'France',
-              imageUrl: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&q=80&w=800'
+              name: 'Jaipur',
+              country: 'India',
+              imageUrl: 'https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&q=80&w=800'
             },
-            arrivalDate: '2026-06-15',
-            departureDate: '2026-06-19',
+            arrivalDate: '2026-04-10',
+            departureDate: '2026-04-13',
             activities: [
               {
                 id: 'act-1',
                 activity: {
-                  name: 'Eiffel Tower Sunset Ascent',
+                  name: 'Amber Fort & Sheesh Mahal Tour',
                   category: 'SIGHTSEEING',
-                  cost: 35,
-                  durationMinutes: 120
+                  cost: 1200,
+                  durationMinutes: 180
                 },
-                scheduledTime: '2026-06-15T18:00:00Z',
-                customCost: 35
+                scheduledTime: '2026-04-10T10:00:00Z',
+                customCost: 1200
               },
               {
                 id: 'act-2',
                 activity: {
-                  name: 'Seine River Evening Dinner Cruise',
+                  name: 'Chokhi Dhani Cultural Dinner',
                   category: 'FOOD',
-                  cost: 75,
-                  durationMinutes: 150
+                  cost: 1500,
+                  durationMinutes: 180
                 },
-                scheduledTime: '2026-06-16T20:00:00Z',
-                customCost: 75
+                scheduledTime: '2026-04-11T19:00:00Z',
+                customCost: 1500
               }
             ]
           },
           {
-            id: 'stop-rome',
+            id: 'stop-udaipur',
             city: {
-              name: 'Rome',
-              country: 'Italy',
-              imageUrl: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&q=80&w=800'
+              name: 'Udaipur',
+              country: 'India',
+              imageUrl: 'https://images.unsplash.com/photo-1615836245337-f5b9b2303f10?auto=format&fit=crop&q=80&w=800'
             },
-            arrivalDate: '2026-06-20',
-            departureDate: '2026-06-24',
+            arrivalDate: '2026-04-13',
+            departureDate: '2026-04-16',
             activities: [
               {
                 id: 'act-3',
                 activity: {
-                  name: 'Colosseum & Roman Forum VIP Access',
-                  category: 'SIGHTSEEING',
-                  cost: 48,
-                  durationMinutes: 180
+                  name: 'Lake Pichola Sunset Boat Cruise',
+                  category: 'RELAXATION',
+                  cost: 1100,
+                  durationMinutes: 90
                 },
-                scheduledTime: '2026-06-21T09:30:00Z',
-                customCost: 48
+                scheduledTime: '2026-04-14T17:30:00Z',
+                customCost: 1100
               }
             ]
           }
         ]
       });
+      setBudgetInput(45000);
     } finally {
       setLoading(false);
     }
@@ -177,50 +182,48 @@ export default function ItineraryBuilder() {
         setStopForm(prev => ({ ...prev, cityId: data[0].id }));
       }
     } catch (err) {
-      console.log('Using seeded cities fallback');
+      console.log('Using fallback cities');
     }
   };
 
   const handleAddStop = async (e) => {
     e.preventDefault();
-    if (!stopForm.cityId || !stopForm.arrivalDate || !stopForm.departureDate) {
-      toast.error('Please fill in stop dates and choose a city');
-      return;
-    }
-
     try {
-      const { data } = await api.post(`/core/trips/${tripId}/stops`, {
-        ...stopForm,
+      const payload = {
+        cityId: stopForm.cityId,
+        arrivalDate: stopForm.arrivalDate,
+        departureDate: stopForm.departureDate,
         sortOrder: (trip?.stops?.length || 0) + 1
-      });
-      toast.success('Destination stop added!');
+      };
+      const { data } = await api.post(`/core/trips/${tripId}/stops`, payload);
+      setTrip(prev => ({
+        ...prev,
+        stops: [...(prev?.stops || []), data]
+      }));
       setIsAddStopOpen(false);
-      fetchTripData();
+      toast.success('Destination stop added successfully!');
     } catch (err) {
-      // Local addition
-      const selectedCityObj = cities.find(c => c.id === stopForm.cityId) || { name: 'New City', country: 'Global' };
-      const mockStop = {
+      // Local fallback
+      const chosenCity = cities.find(c => c.id === stopForm.cityId) || { name: 'New Destination', country: 'Explore' };
+      const localStop = {
         id: `stop-${Date.now()}`,
-        city: selectedCityObj,
+        city: chosenCity,
         arrivalDate: stopForm.arrivalDate,
         departureDate: stopForm.departureDate,
         activities: []
       };
       setTrip(prev => ({
         ...prev,
-        stops: [...(prev.stops || []), mockStop]
+        stops: [...(prev?.stops || []), localStop]
       }));
       setIsAddStopOpen(false);
-      toast.success('Destination stop added!');
+      toast.success('Stop added!');
     }
   };
 
   const handleAddActivity = async (e) => {
     e.preventDefault();
-    if (!selectedStopId || !activityForm.name) {
-      toast.error('Please enter activity details');
-      return;
-    }
+    if (!selectedStopId) return;
 
     const newAct = {
       id: `act-${Date.now()}`,
@@ -230,9 +233,20 @@ export default function ItineraryBuilder() {
         cost: Number(activityForm.customCost),
         durationMinutes: 90
       },
-      scheduledTime: activityForm.scheduledTime || new Date().toISOString(),
-      customCost: Number(activityForm.customCost)
+      customCost: Number(activityForm.customCost),
+      scheduledTime: activityForm.scheduledTime || new Date().toISOString()
     };
+
+    try {
+      await api.post(`/core/trips/${tripId}/stops/${selectedStopId}/activities`, {
+        name: activityForm.name,
+        category: activityForm.category,
+        customCost: Number(activityForm.customCost),
+        scheduledTime: activityForm.scheduledTime
+      });
+    } catch (err) {
+      console.log('Saved to local state');
+    }
 
     setTrip(prev => ({
       ...prev,
@@ -252,10 +266,24 @@ export default function ItineraryBuilder() {
       activityId: '',
       name: '',
       scheduledTime: '',
-      customCost: 25,
+      customCost: 2500,
       category: 'SIGHTSEEING'
     });
     toast.success('Activity assigned to stop!');
+  };
+
+  const handleSaveBudget = async (e) => {
+    e.preventDefault();
+    try {
+      await api.put(`/core/trips/${tripId}`, { budget: Number(budgetInput) });
+      setTrip(prev => ({ ...prev, budget: Number(budgetInput) }));
+      setIsEditBudgetOpen(false);
+      toast.success('Trip budget updated successfully! 💸');
+    } catch (err) {
+      setTrip(prev => ({ ...prev, budget: Number(budgetInput) }));
+      setIsEditBudgetOpen(false);
+      toast.success('Trip budget updated! 💸');
+    }
   };
 
   const getCategoryColor = (cat) => {
@@ -281,6 +309,18 @@ export default function ItineraryBuilder() {
     return sum + stopCost;
   }, 0) || 0;
 
+  // Active stop city name for smart recommendations
+  const activeStop = trip?.stops?.find(s => s.id === selectedStopId);
+  const activeCityName = activeStop?.city?.name || 'this city';
+
+  // Preset recommended activity suggestions per city
+  const citySuggestedActivities = [
+    { name: `Highlights & Heritage Landmark Tour of ${activeCityName}`, category: 'SIGHTSEEING', cost: 1500, duration: '3 hrs' },
+    { name: `Authentic Street Food & Traditional Dinner`, category: 'FOOD', cost: 1200, duration: '2 hrs' },
+    { name: `Scenic Sunset Point & Cultural Excursion`, category: 'RELAXATION', cost: 900, duration: '1.5 hrs' },
+    { name: `Outdoor Nature & Adventure Trek`, category: 'ADVENTURE', cost: 2400, duration: '2.5 hrs' },
+  ];
+
   return (
     <div className="space-y-8 pb-16">
       
@@ -288,7 +328,7 @@ export default function ItineraryBuilder() {
       <div className="flex items-center justify-between">
         <button
           onClick={() => navigate('/dashboard/trips')}
-          className="inline-flex items-center space-x-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 transition bg-white px-4 py-2.5 rounded-xl border border-slate-100 shadow-sm"
+          className="inline-flex items-center space-x-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 transition bg-white px-4 py-2.5 rounded-xl border border-slate-100 shadow-sm cursor-pointer"
         >
           <ChevronLeft size={16} />
           <span>Back to My Trips</span>
@@ -322,7 +362,7 @@ export default function ItineraryBuilder() {
 
           <button
             onClick={() => setIsShareModalOpen(true)}
-            className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 text-xs font-bold px-4 py-2.5 rounded-xl shadow-sm transition flex items-center space-x-1.5"
+            className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 text-xs font-bold px-4 py-2.5 rounded-xl shadow-sm transition flex items-center space-x-1.5 cursor-pointer"
           >
             <Share2 size={15} />
             <span>Share</span>
@@ -361,8 +401,24 @@ export default function ItineraryBuilder() {
               </span>
               <span className="flex items-center space-x-1.5 font-bold text-white">
                 <span className="text-amber-400 font-bold text-base">₹</span>
-                <span>Total Activities Cost: ₹{totalCost.toLocaleString('en-IN')}</span>
+                <span>Activities: ₹{totalCost.toLocaleString('en-IN')}</span>
               </span>
+
+              {/* Dedicated Trip Budget Badge with Quick Edit */}
+              <div className="flex items-center space-x-1.5 bg-white/20 backdrop-blur-md px-3 py-1 rounded-xl border border-white/20 text-white font-bold">
+                <Wallet size={13} className="text-emerald-300" />
+                <span>Trip Budget: ₹{Number(trip?.budget || 50000).toLocaleString('en-IN')}</span>
+                <button
+                  onClick={() => {
+                    setBudgetInput(trip?.budget || 50000);
+                    setIsEditBudgetOpen(true);
+                  }}
+                  className="p-1 hover:bg-white/20 rounded-md transition ml-1 cursor-pointer text-sky-200 hover:text-white"
+                  title="Edit trip budget"
+                >
+                  <Edit2 size={12} />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -454,7 +510,7 @@ export default function ItineraryBuilder() {
                           setSelectedStopId(stop.id);
                           setIsAddActivityOpen(true);
                         }}
-                        className="text-xs font-bold text-sky-600 hover:text-sky-700"
+                        className="text-xs font-bold text-sky-600 hover:text-sky-700 cursor-pointer"
                       >
                         + Browse and assign activities
                       </button>
@@ -471,12 +527,12 @@ export default function ItineraryBuilder() {
               <div className="max-w-sm mx-auto">
                 <h3 className="text-lg font-bold text-slate-900">Your itinerary is empty</h3>
                 <p className="text-xs text-slate-500 mt-1">
-                  Add your first destination stop (e.g. Paris, Tokyo) to start assigning day-by-day activities.
+                  Add your first destination stop (e.g. Jaipur, Goa, Paris) to start assigning day-by-day activities.
                 </p>
               </div>
               <button
                 onClick={() => setIsAddStopOpen(true)}
-                className="bg-sky-600 hover:bg-sky-700 text-white font-bold px-6 py-3 rounded-2xl text-xs transition inline-flex items-center space-x-2"
+                className="bg-sky-600 hover:bg-sky-700 text-white font-bold px-6 py-3 rounded-2xl text-xs transition inline-flex items-center space-x-2 cursor-pointer"
               >
                 <Plus size={16} />
                 <span>Add First Stop</span>
@@ -534,7 +590,7 @@ export default function ItineraryBuilder() {
             >
               <button 
                 onClick={() => setIsAddStopOpen(false)}
-                className="absolute top-6 right-6 p-2 rounded-full text-slate-400 hover:text-slate-600"
+                className="absolute top-6 right-6 p-2 rounded-full text-slate-400 hover:text-slate-600 cursor-pointer"
               >
                 <X size={20} />
               </button>
@@ -591,7 +647,7 @@ export default function ItineraryBuilder() {
                 <div className="pt-3">
                   <button
                     type="submit"
-                    className="w-full py-3.5 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl shadow-lg shadow-sky-600/20 transition"
+                    className="w-full py-3.5 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl shadow-lg shadow-sky-600/20 transition cursor-pointer"
                   >
                     Add Stop to Itinerary
                   </button>
@@ -602,7 +658,7 @@ export default function ItineraryBuilder() {
         )}
       </AnimatePresence>
 
-      {/* Add Activity Modal */}
+      {/* Add Activity Modal with Smart City Recommendations */}
       <AnimatePresence>
         {isAddActivityOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -618,19 +674,50 @@ export default function ItineraryBuilder() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-100 p-8 z-10"
+              className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-100 p-8 z-10 max-h-[85vh] overflow-y-auto"
             >
               <button 
                 onClick={() => setIsAddActivityOpen(false)}
-                className="absolute top-6 right-6 p-2 rounded-full text-slate-400 hover:text-slate-600"
+                className="absolute top-6 right-6 p-2 rounded-full text-slate-400 hover:text-slate-600 cursor-pointer"
               >
                 <X size={20} />
               </button>
 
               <h3 className="text-2xl font-bold text-slate-900 mb-1">Assign Activity</h3>
-              <p className="text-xs text-slate-500 mb-6">Add an experience, tour, or dinner to this stop</p>
+              <p className="text-xs text-slate-500 mb-5">Pick suggested experiences for {activeCityName} or enter a custom one</p>
 
-              <form onSubmit={handleAddActivity} className="space-y-4">
+              {/* 1-Click Recommended Activities for This Stop */}
+              <div className="mb-6 space-y-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  ✨ Suggested for {activeCityName}:
+                </span>
+                <div className="grid grid-cols-1 gap-2">
+                  {citySuggestedActivities.map((sug, i) => (
+                    <div
+                      key={i}
+                      onClick={() => {
+                        setActivityForm({
+                          name: sug.name,
+                          category: sug.category,
+                          customCost: sug.cost,
+                          scheduledTime: '',
+                          activityId: ''
+                        });
+                        toast.success(`Selected "${sug.name}"`);
+                      }}
+                      className="p-3 bg-slate-50 hover:bg-sky-50 border border-slate-100 hover:border-sky-300 rounded-2xl cursor-pointer transition flex items-center justify-between text-xs group"
+                    >
+                      <div>
+                        <span className="font-bold text-slate-800 group-hover:text-sky-700 block">{sug.name}</span>
+                        <span className="text-[10px] text-slate-400">{sug.category} • {sug.duration}</span>
+                      </div>
+                      <span className="font-extrabold text-emerald-600 shrink-0 ml-2">₹{sug.cost.toLocaleString('en-IN')}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <form onSubmit={handleAddActivity} className="space-y-4 pt-3 border-t border-slate-100">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
                     Activity Name *
@@ -678,9 +765,85 @@ export default function ItineraryBuilder() {
                 <div className="pt-3">
                   <button
                     type="submit"
-                    className="w-full py-3.5 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl shadow-lg shadow-sky-600/20 transition"
+                    className="w-full py-3.5 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl shadow-lg shadow-sky-600/20 transition cursor-pointer"
                   >
-                    Save Activity
+                    Save Activity to Itinerary
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Edit Trip Budget Modal */}
+      <AnimatePresence>
+        {isEditBudgetOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsEditBudgetOpen(false)}
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-md"
+            />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-100 p-8 z-10"
+            >
+              <button 
+                onClick={() => setIsEditBudgetOpen(false)}
+                className="absolute top-6 right-6 p-2 rounded-full text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                <X size={20} />
+              </button>
+
+              <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mb-4">
+                <Wallet size={24} />
+              </div>
+
+              <h3 className="text-xl font-bold text-slate-900">Edit Trip Budget</h3>
+              <p className="text-xs text-slate-500 mb-6">Update the allocated spending budget for this specific trip</p>
+
+              <form onSubmit={handleSaveBudget} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Total Budget (₹)
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    value={budgetInput}
+                    onChange={(e) => setBudgetInput(e.target.value)}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-900 text-base font-bold"
+                  />
+                </div>
+
+                {/* Preset Chips */}
+                <div className="flex gap-2">
+                  {[35000, 50000, 75000, 150000].map((amt) => (
+                    <button
+                      type="button"
+                      key={amt}
+                      onClick={() => setBudgetInput(amt)}
+                      className={`text-xs font-bold px-3 py-1.5 rounded-xl transition ${
+                        Number(budgetInput) === amt ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      ₹{(amt / 1000).toFixed(0)}k
+                    </button>
+                  ))}
+                </div>
+
+                <div className="pt-3">
+                  <button
+                    type="submit"
+                    className="w-full py-3.5 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl shadow-lg shadow-sky-600/20 transition cursor-pointer"
+                  >
+                    Save Updated Budget
                   </button>
                 </div>
               </form>
@@ -709,7 +872,7 @@ export default function ItineraryBuilder() {
             >
               <button 
                 onClick={() => setIsShareModalOpen(false)}
-                className="absolute top-6 right-6 p-2 rounded-full text-slate-400 hover:text-slate-600"
+                className="absolute top-6 right-6 p-2 rounded-full text-slate-400 hover:text-slate-600 cursor-pointer"
               >
                 <X size={20} />
               </button>

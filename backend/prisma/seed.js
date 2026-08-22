@@ -148,7 +148,7 @@ async function main() {
     }
   }
 
-  console.log('✅ Successfully seeded 6 cities and 18 travel activities!');
+  console.log(`✅ Successfully seeded ${citiesData.length} cities with dynamic activities!`);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); }).finally(async () => { await prisma.$disconnect(); });

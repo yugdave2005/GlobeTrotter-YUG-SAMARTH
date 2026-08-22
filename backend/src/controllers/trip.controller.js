@@ -3,7 +3,7 @@ import { getIO } from '../utils/socket.js';
 
 export const createTrip = async (req, res) => {
   try {
-    const { name, description, startDate, endDate, coverPhotoUrl } = req.body;
+    const { name, description, startDate, endDate, coverPhotoUrl, budget } = req.body;
     const trip = await prisma.trip.create({
       data: {
         userId: req.user.id,
@@ -11,10 +11,53 @@ export const createTrip = async (req, res) => {
         description,
         startDate: new Date(startDate),
         endDate: new Date(endDate),
-        coverPhotoUrl
+        coverPhotoUrl,
+        budget: budget ? parseFloat(budget) : 50000
       }
     });
     res.status(201).json(trip);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const updateTrip = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, description, startDate, endDate, coverPhotoUrl, budget } = req.body;
+    
+    const existing = await prisma.trip.findUnique({ where: { id } });
+    if (!existing || existing.userId !== req.user.id) {
+      return res.status(403).json({ message: 'Trip not found or unauthorized' });
+    }
+
+    const updated = await prisma.trip.update({
+      where: { id },
+      data: {
+        name: name !== undefined ? name : existing.name,
+        description: description !== undefined ? description : existing.description,
+        startDate: startDate ? new Date(startDate) : existing.startDate,
+        endDate: endDate ? new Date(endDate) : existing.endDate,
+        coverPhotoUrl: coverPhotoUrl !== undefined ? coverPhotoUrl : existing.coverPhotoUrl,
+        budget: budget !== undefined ? parseFloat(budget) : existing.budget
+      }
+    });
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const deleteTrip = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const existing = await prisma.trip.findUnique({ where: { id } });
+    if (!existing || existing.userId !== req.user.id) {
+      return res.status(403).json({ message: 'Trip not found or unauthorized' });
+    }
+
+    await prisma.trip.delete({ where: { id } });
+    res.json({ message: 'Trip deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

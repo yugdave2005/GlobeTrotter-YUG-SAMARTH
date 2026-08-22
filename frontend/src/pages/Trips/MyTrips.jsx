@@ -3,44 +3,45 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Plus, Calendar, MapPin, Search, Filter, Trash2, 
-  ChevronRight, Sparkles, Clock, Globe, ArrowRight, X, AlertCircle
+  ChevronRight, Sparkles, Clock, Globe, ArrowRight, X, AlertCircle, Wallet
 } from 'lucide-react';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
+import { SmartItineraryPlannerModal } from '../../components/SmartItineraryPlannerModal';
 
 const DUMMY_TRIPS = [
   {
-    id: 'demo-1',
+    id: 'rajasthan-1',
+    name: 'Royal Rajasthan Heritage Tour 🇮🇳',
+    description: 'A 6-day royal journey across Jaipur, Udaipur, and majestic fortresses.',
+    startDate: '2026-04-10',
+    endDate: '2026-04-16',
+    coverPhotoUrl: 'https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&q=80&w=800',
+    status: 'Upcoming',
+    stops: [{ city: { name: 'Jaipur' } }, { city: { name: 'Udaipur' } }],
+    budget: 45000
+  },
+  {
+    id: 'goa-2',
+    name: 'Goa Coastal Watersports & Sunsets 🏖️',
+    description: 'Scuba diving at Grand Island, sunset catamaran cruise, and beachside shacks.',
+    startDate: '2026-05-01',
+    endDate: '2026-05-05',
+    coverPhotoUrl: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&q=80&w=800',
+    status: 'Upcoming',
+    stops: [{ city: { name: 'Goa' } }],
+    budget: 35000
+  },
+  {
+    id: 'euro-3',
     name: 'Classic Euro Tour 2026 🇪🇺',
     description: 'A 2-week scenic journey across Paris, Rome, and Barcelona.',
     startDate: '2026-06-15',
     endDate: '2026-06-29',
     coverPhotoUrl: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&q=80&w=800',
     status: 'Upcoming',
-    stops: [{ city: { name: 'Paris' } }, { city: { name: 'Rome' } }, { city: { name: 'Barcelona' } }],
-    estimatedBudget: 3200
-  },
-  {
-    id: 'demo-2',
-    name: 'Tokyo Neon & Cherry Blossoms 🌸',
-    description: 'High-tech exploration, sushi masterclasses, and Mount Fuji views.',
-    startDate: '2026-04-10',
-    endDate: '2026-04-20',
-    coverPhotoUrl: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&q=80&w=800',
-    status: 'Upcoming',
-    stops: [{ city: { name: 'Tokyo' } }],
-    estimatedBudget: 2800
-  },
-  {
-    id: 'demo-3',
-    name: 'Bali Tropical Retreat 🌴',
-    description: 'Rice terraces, spiritual sanctuaries, and beachside wellness.',
-    startDate: '2025-11-05',
-    endDate: '2025-11-15',
-    coverPhotoUrl: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&q=80&w=800',
-    status: 'Completed',
-    stops: [{ city: { name: 'Bali' } }],
-    estimatedBudget: 1500
+    stops: [{ city: { name: 'Paris' } }, { city: { name: 'Rome' } }],
+    budget: 185000
   }
 ];
 
@@ -51,13 +52,15 @@ export default function MyTrips() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSmartPlannerOpen, setIsSmartPlannerOpen] = useState(false);
 
   // New Trip Form State
   const [tripForm, setTripForm] = useState({
     name: '',
     description: '',
-    startDate: '',
-    endDate: '',
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    budget: 50000,
     coverPhotoUrl: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&q=80&w=1000'
   });
   const [creating, setCreating] = useState(false);
@@ -122,16 +125,26 @@ export default function MyTrips() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">My Travel Plans</h1>
-          <p className="text-sm text-slate-500 mt-1">Manage itineraries, timeline schedules, and collaborative trips</p>
+          <p className="text-sm text-slate-500 mt-1">Manage custom routes, budget allotments, and multi-city itineraries</p>
         </div>
 
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="bg-sky-600 hover:bg-sky-700 active:scale-95 text-white font-bold px-6 py-3.5 rounded-2xl text-sm shadow-md shadow-sky-600/20 transition flex items-center justify-center space-x-2 shrink-0 cursor-pointer"
-        >
-          <Plus size={18} />
-          <span>Plan New Trip</span>
-        </button>
+        <div className="flex items-center space-x-3">
+          <button
+            onClick={() => setIsSmartPlannerOpen(true)}
+            className="bg-amber-400 hover:bg-amber-300 active:scale-95 text-slate-950 font-extrabold px-5 py-3.5 rounded-2xl text-sm shadow-md transition flex items-center space-x-2 shrink-0 cursor-pointer"
+          >
+            <Sparkles size={17} />
+            <span>✨ AI Smart Itinerary</span>
+          </button>
+
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="bg-sky-600 hover:bg-sky-700 active:scale-95 text-white font-bold px-5 py-3.5 rounded-2xl text-sm shadow-md shadow-sky-600/20 transition flex items-center justify-center space-x-2 shrink-0 cursor-pointer"
+          >
+            <Plus size={18} />
+            <span>+ Plan Custom Trip</span>
+          </button>
+        </div>
       </div>
 
       {/* Search & Filter Bar */}
@@ -222,24 +235,36 @@ export default function MyTrips() {
                   {trip.description || 'Custom multi-city travel itinerary with scheduled activities and budget estimations.'}
                 </p>
 
-                {/* Cities preview pills */}
-                <div className="flex items-center space-x-1 overflow-x-auto pb-1 text-xs">
-                  <MapPin size={14} className="text-sky-500 shrink-0 mr-1" />
-                  {trip.stops && trip.stops.length > 0 ? (
-                    trip.stops.map((stop, idx) => (
-                      <span key={idx} className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-lg text-[11px] font-medium shrink-0">
-                        {stop.city?.name || 'City'}
-                      </span>
-                    ))
-                  ) : (
-                    <span className="text-[11px] text-slate-400">No destinations added yet</span>
-                  )}
+                {/* Cities preview pills & Budget */}
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-1 overflow-x-auto pb-1 text-xs">
+                    <MapPin size={14} className="text-sky-500 shrink-0 mr-1" />
+                    {trip.stops && trip.stops.length > 0 ? (
+                      trip.stops.map((stop, idx) => (
+                        <span key={idx} className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-lg text-[11px] font-medium shrink-0">
+                          {stop.city?.name || 'City'}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-[11px] text-slate-400">No destinations added yet</span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-50">
+                    <span className="text-slate-400 font-medium flex items-center space-x-1">
+                      <Wallet size={13} className="text-emerald-500" />
+                      <span>Budget:</span>
+                    </span>
+                    <span className="font-bold text-slate-800 bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-lg">
+                      ₹{Number(trip.budget || trip.estimatedBudget || 45000).toLocaleString('en-IN')}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Footer Action */}
                 <div className="pt-3 border-t border-slate-50 flex items-center justify-between">
                   <span className="text-xs font-semibold text-slate-400">
-                    {trip.stops?.length || 0} stops
+                    {trip.stops?.length || 0} destination stops
                   </span>
                   <span className="text-xs font-bold text-sky-600 group-hover:translate-x-1 transition-transform inline-flex items-center">
                     Open Builder <ChevronRight size={14} className="ml-0.5" />
@@ -291,7 +316,7 @@ export default function MyTrips() {
                     required
                     value={tripForm.name}
                     onChange={(e) => setTripForm({ ...tripForm, name: e.target.value })}
-                    placeholder="e.g. Euro Trip Summer 2026"
+                    placeholder="e.g. Royal Rajasthan Tour 2026"
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-900 text-sm"
                   />
                 </div>
@@ -336,13 +361,46 @@ export default function MyTrips() {
                   </div>
                 </div>
 
+                {/* Trip-Specific Budget */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                      Trip Budget (₹)
+                    </label>
+                    <span className="text-xs font-bold text-sky-600">
+                      ₹{Number(tripForm.budget || 50000).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                  <input
+                    type="number"
+                    value={tripForm.budget}
+                    onChange={(e) => setTripForm({ ...tripForm, budget: Number(e.target.value) })}
+                    placeholder="50000"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-900 text-sm"
+                  />
+                  <div className="flex gap-2 mt-2">
+                    {[25000, 50000, 100000, 200000].map((b) => (
+                      <button
+                        type="button"
+                        key={b}
+                        onClick={() => setTripForm({ ...tripForm, budget: b })}
+                        className={`text-[11px] font-bold px-2.5 py-1 rounded-lg transition ${
+                          tripForm.budget === b ? 'bg-sky-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        }`}
+                      >
+                        ₹{(b / 1000).toFixed(0)}k
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="pt-3">
                   <button
                     type="submit"
                     disabled={creating}
                     className="w-full py-3.5 px-4 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl shadow-lg shadow-sky-600/20 transition flex items-center justify-center space-x-2 disabled:opacity-50 cursor-pointer"
                   >
-                    {creating ? <span>Creating...</span> : <span>Create & Open Itinerary</span>}
+                    {creating ? <span>Creating...</span> : <span>Create & Start Planning</span>}
                   </button>
                 </div>
               </form>
@@ -350,6 +408,14 @@ export default function MyTrips() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* AI Smart Route Planner Assistant Modal */}
+      <SmartItineraryPlannerModal
+        isOpen={isSmartPlannerOpen}
+        onClose={() => setIsSmartPlannerOpen(false)}
+        onItineraryCreated={(newTrip) => setTrips(prev => [newTrip, ...prev])}
+      />
+
     </div>
   );
 }

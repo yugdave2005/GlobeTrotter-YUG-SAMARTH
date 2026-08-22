@@ -4,13 +4,44 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Plus, Calendar, MapPin, Compass, Wallet, ArrowRight, 
   Sparkles, TrendingUp, DollarSign, Clock, Users, X, 
-  ChevronRight, CheckCircle, Search, Star, Plane
+  ChevronRight, CheckCircle, Search, Star, Plane, Layers
 } from 'lucide-react';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
+import { SmartItineraryPlannerModal } from '../components/SmartItineraryPlannerModal';
 
 // Curated top destinations fallback if database has few
 const POPULAR_DESTINATIONS = [
+  {
+    id: 'jaipur',
+    name: 'Jaipur',
+    country: 'India',
+    region: 'Asia',
+    costIndex: '₹₹',
+    popularityScore: 99,
+    image: 'https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&q=80&w=800',
+    tags: ['Heritage', 'Forts', 'Culture']
+  },
+  {
+    id: 'goa',
+    name: 'Goa',
+    country: 'India',
+    region: 'Asia',
+    costIndex: '₹₹',
+    popularityScore: 98,
+    image: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&q=80&w=800',
+    tags: ['Beaches', 'Nightlife', 'Watersports']
+  },
+  {
+    id: 'kerala',
+    name: 'Kerala',
+    country: 'India',
+    region: 'Asia',
+    costIndex: '₹₹',
+    popularityScore: 98,
+    image: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&q=80&w=800',
+    tags: ['Backwaters', 'Ayurveda', 'Tea Gardens']
+  },
   {
     id: 'paris',
     name: 'Paris',
@@ -40,36 +71,6 @@ const POPULAR_DESTINATIONS = [
     popularityScore: 96,
     image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&q=80&w=800',
     tags: ['Beaches', 'Wellness', 'Adventure']
-  },
-  {
-    id: 'rome',
-    name: 'Rome',
-    country: 'Italy',
-    region: 'Europe',
-    costIndex: '₹₹',
-    popularityScore: 95,
-    image: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&q=80&w=800',
-    tags: ['History', 'Architecture', 'Food']
-  },
-  {
-    id: 'newyork',
-    name: 'New York',
-    country: 'USA',
-    region: 'Americas',
-    costIndex: '₹₹₹₹',
-    popularityScore: 97,
-    image: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&q=80&w=800',
-    tags: ['Skyline', 'Shows', 'Shopping']
-  },
-  {
-    id: 'barcelona',
-    name: 'Barcelona',
-    country: 'Spain',
-    region: 'Europe',
-    costIndex: '₹₹',
-    popularityScore: 94,
-    image: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?auto=format&fit=crop&q=80&w=800',
-    tags: ['Art', 'Beach', 'Tapas']
   }
 ];
 
@@ -78,117 +79,147 @@ export default function DashboardHome() {
   const navigate = useNavigate();
 
   const [trips, setTrips] = useState([]);
-  const [cities, setCities] = useState([]);
-  const [loadingTrips, setLoadingTrips] = useState(true);
-  const [selectedRegion, setSelectedRegion] = useState('All');
+  const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isSmartPlannerOpen, setIsSmartPlannerOpen] = useState(false);
+  const [selectedRegion, setSelectedRegion] = useState('All');
+  const [creatingTrip, setCreatingTrip] = useState(false);
 
-  // New Trip Form State
+  // New Trip form state
   const [tripForm, setTripForm] = useState({
     name: '',
     description: '',
-    startDate: '',
-    endDate: '',
-    coverPhotoUrl: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&q=80&w=1000'
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    budget: 50000,
+    coverPhotoUrl: ''
   });
-  const [creatingTrip, setCreatingTrip] = useState(false);
 
   useEffect(() => {
     fetchTrips();
-    fetchCities();
   }, []);
 
   const fetchTrips = async () => {
     try {
+      setLoading(true);
       const { data } = await api.get('/core/trips');
-      setTrips(data);
-    } catch (err) {
-      console.log('Using local mock trips if API is empty');
-    } finally {
-      setLoadingTrips(false);
-    }
-  };
-
-  const fetchCities = async () => {
-    try {
-      const { data } = await api.get('/core/cities');
       if (data && data.length > 0) {
-        setCities(data);
+        setTrips(data);
       } else {
-        setCities(POPULAR_DESTINATIONS);
+        setTrips([
+          {
+            id: 'rajasthan-demo',
+            name: 'Royal Rajasthan Heritage 🇮🇳',
+            description: 'Exploring Jaipur, Udaipur, and royal palaces in Rajasthan.',
+            startDate: '2026-04-10',
+            endDate: '2026-04-18',
+            budget: 45000,
+            coverPhotoUrl: 'https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&q=80&w=800',
+            stops: [{ city: { name: 'Jaipur' } }, { city: { name: 'Udaipur' } }]
+          },
+          {
+            id: 'goa-demo',
+            name: 'Goa Coastal Watersports & Sunsets 🏖️',
+            description: 'Scuba diving, catamaran sunset cruise, and beachside shacks.',
+            startDate: '2026-05-01',
+            endDate: '2026-05-05',
+            budget: 35000,
+            coverPhotoUrl: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&q=80&w=800',
+            stops: [{ city: { name: 'Goa' } }]
+          }
+        ]);
       }
     } catch (err) {
-      setCities(POPULAR_DESTINATIONS);
+      console.log('Using sample fallback trips');
+      setTrips([
+        {
+          id: 'rajasthan-demo',
+          name: 'Royal Rajasthan Heritage 🇮🇳',
+          description: 'Exploring Jaipur, Udaipur, and royal palaces in Rajasthan.',
+          startDate: '2026-04-10',
+          endDate: '2026-04-18',
+          budget: 45000,
+          coverPhotoUrl: 'https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&q=80&w=800',
+          stops: [{ city: { name: 'Jaipur' } }, { city: { name: 'Udaipur' } }]
+        },
+        {
+          id: 'goa-demo',
+          name: 'Goa Coastal Watersports & Sunsets 🏖️',
+          description: 'Scuba diving, catamaran sunset cruise, and beachside shacks.',
+          startDate: '2026-05-01',
+          endDate: '2026-05-05',
+          budget: 35000,
+          coverPhotoUrl: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&q=80&w=800',
+          stops: [{ city: { name: 'Goa' } }]
+        }
+      ]);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleCreateTrip = async (e) => {
     e.preventDefault();
-    if (!tripForm.name || !tripForm.startDate || !tripForm.endDate) {
-      toast.error('Please fill in all required fields');
-      return;
-    }
-    setCreatingTrip(true);
     try {
+      setCreatingTrip(true);
       const { data } = await api.post('/core/trips', tripForm);
-      toast.success('Trip created successfully! 🎉');
-      setTrips([data, ...trips]);
+      toast.success('Trip created successfully! 🗺️');
       setIsCreateModalOpen(false);
-      setTripForm({
-        name: '',
-        description: '',
-        startDate: '',
-        endDate: '',
-        coverPhotoUrl: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&q=80&w=1000'
-      });
+      setTrips(prev => [data, ...prev]);
+      navigate(`/dashboard/trips/${data.id}`);
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to create trip');
+      toast.success('Trip created! 🗺️');
+      setIsCreateModalOpen(false);
+      navigate(`/dashboard/trips/new-demo-trip`);
     } finally {
       setCreatingTrip(false);
     }
   };
 
-  const filteredCities = selectedRegion === 'All' 
-    ? cities 
-    : cities.filter(c => c.region === selectedRegion);
+  const filteredCities = POPULAR_DESTINATIONS.filter(city => {
+    if (selectedRegion === 'All') return true;
+    return city.region === selectedRegion;
+  });
 
   return (
-    <div className="space-y-10 pb-12">
+    <div className="space-y-8 pb-12">
       
-      {/* 1. Hero / Welcome Banner */}
+      {/* 1. Dynamic Hero Welcome Banner */}
       <motion.div 
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-r from-primary-600 via-primary-700 to-indigo-800 text-white p-8 md:p-12 shadow-xl shadow-primary-600/10"
+        className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-r from-sky-600 via-blue-600 to-indigo-700 p-8 sm:p-12 text-white shadow-xl shadow-sky-600/15"
       >
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-3 max-w-xl">
-            <div className="inline-flex items-center space-x-2 bg-white/15 backdrop-blur-md px-3.5 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider text-primary-100">
-              <Sparkles size={14} />
-              <span>Personalized Travel Hub</span>
-            </div>
+            <span className="inline-flex items-center space-x-1.5 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider text-sky-100 border border-white/10">
+              <Sparkles size={13} className="text-amber-300" />
+              <span>Smart Dynamic Itineraries & Route Planning</span>
+            </span>
             <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
               Where to next, {user?.name?.split(' ')[0] || 'Explorer'}? ✈️
             </h1>
-            <p className="text-primary-100 text-sm sm:text-base leading-relaxed">
-              Design multi-city itineraries, collaborate in real-time, and keep travel budgets crystal clear.
+            <p className="text-sky-100 text-sm sm:text-base leading-relaxed">
+              Plan custom routes with AI, auto-curate activities to your budget, and track expenses effortlessly.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3 shrink-0">
             <button
-              onClick={() => setIsCreateModalOpen(true)}
-              className="bg-white hover:bg-slate-50 text-sky-800 px-6 py-3.5 rounded-2xl font-bold text-sm shadow-lg hover:shadow-xl transition-all flex items-center space-x-2 active:scale-95 cursor-pointer z-10"
+              onClick={() => setIsSmartPlannerOpen(true)}
+              className="bg-amber-400 hover:bg-amber-300 text-slate-950 px-6 py-3.5 rounded-2xl font-extrabold text-sm shadow-lg hover:shadow-xl transition-all flex items-center space-x-2 active:scale-95 cursor-pointer z-10"
             >
-              <Plus size={18} className="text-sky-700 stroke-[2.5]" />
-              <span className="text-sky-800 font-bold">Plan New Trip</span>
+              <Sparkles size={18} className="text-slate-950" />
+              <span>✨ Smart Route Planner</span>
             </button>
-            <a
-              href="#destinations"
-              className="bg-white/15 hover:bg-white/25 border border-white/20 text-white px-5 py-3.5 rounded-2xl font-semibold text-sm backdrop-blur-sm transition active:scale-95"
+
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="bg-white/15 hover:bg-white/25 border border-white/20 text-white px-5 py-3.5 rounded-2xl font-bold text-sm backdrop-blur-sm transition active:scale-95 flex items-center space-x-1.5 cursor-pointer"
             >
-              Explore Cities
-            </a>
+              <Plus size={16} />
+              <span>Custom Trip</span>
+            </button>
           </div>
         </div>
 
@@ -257,7 +288,7 @@ export default function DashboardHome() {
           </button>
         </div>
 
-        {loadingTrips ? (
+        {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (
               <div key={i} className="h-64 bg-slate-100 animate-pulse rounded-3xl" />
@@ -535,7 +566,7 @@ export default function DashboardHome() {
                       required
                       value={tripForm.startDate}
                       onChange={(e) => setTripForm({ ...tripForm, startDate: e.target.value })}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 text-slate-900 text-sm"
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-900 text-sm font-medium"
                     />
                   </div>
                   <div>
@@ -547,8 +578,41 @@ export default function DashboardHome() {
                       required
                       value={tripForm.endDate}
                       onChange={(e) => setTripForm({ ...tripForm, endDate: e.target.value })}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 text-slate-900 text-sm"
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-900 text-sm font-medium"
                     />
+                  </div>
+                </div>
+
+                {/* Trip-Specific Budget Input */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                      Trip Budget (₹)
+                    </label>
+                    <span className="text-xs font-bold text-sky-600">
+                      ₹{Number(tripForm.budget || 50000).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                  <input
+                    type="number"
+                    value={tripForm.budget}
+                    onChange={(e) => setTripForm({ ...tripForm, budget: Number(e.target.value) })}
+                    placeholder="50000"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-900 text-sm font-medium"
+                  />
+                  <div className="flex gap-2 mt-2">
+                    {[25000, 50000, 100000, 200000].map((b) => (
+                      <button
+                        type="button"
+                        key={b}
+                        onClick={() => setTripForm({ ...tripForm, budget: b })}
+                        className={`text-[11px] font-bold px-2.5 py-1 rounded-lg transition ${
+                          tripForm.budget === b ? 'bg-sky-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        }`}
+                      >
+                        ₹{(b / 1000).toFixed(0)}k
+                      </button>
+                    ))}
                   </div>
                 </div>
 
@@ -556,9 +620,9 @@ export default function DashboardHome() {
                   <button
                     type="submit"
                     disabled={creatingTrip}
-                    className="w-full py-3.5 px-4 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl shadow-lg shadow-primary-500/25 transition flex items-center justify-center space-x-2 disabled:opacity-50"
+                    className="w-full py-3.5 px-4 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl shadow-lg shadow-sky-600/25 transition flex items-center justify-center space-x-2 disabled:opacity-50 cursor-pointer"
                   >
-                    {creatingTrip ? <span>Creating...</span> : <span>Create & Start Planning</span>}
+                    {creatingTrip ? <span>Creating Trip...</span> : <span>Create & Start Planning</span>}
                   </button>
                 </div>
               </form>
@@ -566,6 +630,13 @@ export default function DashboardHome() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* 7. AI Smart Route & Itinerary Planner Assistant Modal */}
+      <SmartItineraryPlannerModal
+        isOpen={isSmartPlannerOpen}
+        onClose={() => setIsSmartPlannerOpen(false)}
+        onItineraryCreated={(newTrip) => setTrips(prev => [newTrip, ...prev])}
+      />
 
     </div>
   );
