@@ -1,7 +1,6 @@
 # 🌍 GlobeTrotter — Smart Travel Itinerary Planner
 
-> **A containerized, microservice-oriented travel planning platform built for the hackathon.**
-> Plan trips, build itineraries, track budgets, and share your travel plans — all powered by a modern full-stack architecture.
+> **Plan trips, build itineraries, track budgets, and share your travel plans — powered by a modern full-stack architecture with Docker containerization.**
 
 ---
 
@@ -17,22 +16,17 @@
 - [Getting Started](#getting-started)
 - [Environment Variables](#environment-variables)
 - [Screens & UI](#screens--ui)
-- [Design Decisions & Tradeoffs](#design-decisions--tradeoffs)
-- [Team & Workflow](#team--workflow)
+- [Design Decisions](#design-decisions)
+- [Team](#team)
 - [License](#license)
 
 ---
 
 ## 📖 About the Project
 
-**GlobeTrotter** is a full-stack travel itinerary planning application designed and built under an **8-hour hackathon constraint** by a **2-person team**. It allows users to create trips, search and add cities as stops, browse and attach activities, view a budget breakdown, and share their itinerary publicly via a unique link.
+**GlobeTrotter** is a full-stack travel itinerary planning application built during an **8-hour hackathon** by a **2-person team**. Users can sign up (email or Google OAuth), create trips, add cities as stops, browse and attach activities, log expenses, view budget breakdowns, and share itineraries publicly via unique links.
 
-The project follows a **microservice architecture** with clearly separated concerns:
-- **Authentication** is handled by a dedicated service.
-- **Core travel logic** (trips, stops, activities, budget, city catalog) lives in its own service.
-- **Frontend** is a standalone React SPA communicating with both services.
-
-All components are fully **containerized with Docker Compose** for seamless local development and deployment.
+The backend is a **monolithic Express API** backed by **Prisma ORM** and **PostgreSQL**, containerized with **Docker Compose**. The frontend is a **React 19 SPA** built with **Vite** and **Tailwind CSS v4**.
 
 ---
 
@@ -40,34 +34,41 @@ All components are fully **containerized with Docker Compose** for seamless loca
 
 | Feature | Description |
 |---|---|
-| 🔐 **User Authentication** | Signup, login, and profile management via JWT |
-| 🗺️ **Trip Management** | Create, edit, delete, and view personal trips |
-| 🏙️ **City & Activity Catalog** | Search from a curated, seeded list of cities and activities |
-| 📋 **Itinerary Builder** | Add cities as stops, attach activities to each stop |
-| 💰 **Budget Breakdown** | Auto-calculated budget with per-category totals and a pie chart |
-| 🔗 **Public Sharing** | Generate a shareable link for read-only trip viewing |
-| 🐳 **Fully Containerized** | One-command startup via Docker Compose |
+| 🔐 **Authentication** | Email/password signup & login, Google OAuth, OTP-based password reset |
+| 🗺️ **Trip Management** | Create, view, and manage personal trips with dates and descriptions |
+| 🏙️ **City & Activity Catalog** | Browse a curated, seeded list of cities (with regions & popularity scores) and activities |
+| 📋 **Itinerary Builder** | Add cities as stops to a trip, attach activities to each stop |
+| 💰 **Budget & Expenses** | Log expenses by category (Transport, Stay, Meals, Misc) and view trip budget breakdowns |
+| 📌 **Saved Destinations** | Save favorite cities for quick access |
+| 🔗 **Public Sharing** | Generate a unique share slug for read-only public trip viewing |
+| 🐳 **Dockerized** | One-command PostgreSQL setup via Docker Compose |
 
 ---
 
 ## 🏗️ Architecture
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│                        Docker Compose                        │
-├──────────────┬──────────────┬──────────────┬─────────────────┤
-│   client     │ auth-service │ core-service │    postgres     │
-│  (React +    │ (Express +   │ (Express +   │  (PostgreSQL    │
-│   Vite)      │  JWT)        │  Prisma)     │   16-Alpine)    │
-│  Port: 5173  │ Port: 4001   │ Port: 4002   │  Port: 5432     │
-├──────────────┴──────────────┴──────────────┴─────────────────┤
-│                      Shared Network                          │
-└──────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────┐
+│                   Docker Compose                    │
+│  ┌───────────────────────────────────────────────┐  │
+│  │  postgres (PostgreSQL 15-Alpine)  Port: 5433  │  │
+│  └────────────────────┬──────────────────────────┘  │
+└───────────────────────┼─────────────────────────────┘
+                        │
+        ┌───────────────┴───────────────┐
+        │                               │
+┌───────┴────────┐             ┌────────┴────────┐
+│    Backend     │             │    Frontend     │
+│  Express API   │◄───────────│  React + Vite   │
+│  (Monolith)    │   Axios    │  Tailwind CSS   │
+│  Port: 3000    │             │  Port: 5173     │
+│  Prisma ORM    │             │                 │
+└────────────────┘             └─────────────────┘
 ```
 
-- **2-service backend** split — `auth-service` and `core-service` — a deliberate scope decision for the 8-hour window.
-- **Single PostgreSQL instance** with two schemas (`auth` and `core`) for logical separation.
-- **No gateway/Nginx** — the React client calls each service directly via CORS.
+- **Monolithic backend** — single Express server with logically separated route modules (`/api/auth/*` and `/api/core/*`)
+- **PostgreSQL 15** containerized via Docker Compose with health checks and persistent volume
+- **React 19 SPA** communicating with the backend via Axios
 
 ---
 
@@ -75,12 +76,13 @@ All components are fully **containerized with Docker Compose** for seamless loca
 
 | Layer | Technology |
 |---|---|
-| **Frontend** | React, Vite, Tailwind CSS, Recharts, React Router, Axios |
-| **Backend** | Node.js, Express (2 microservices) |
-| **Database / ORM** | PostgreSQL 16 (Alpine), Prisma |
-| **Authentication** | JWT (long-lived tokens), bcrypt |
-| **Containerization** | Docker, Docker Compose |
-| **Version Control** | Git (trunk-based workflow) |
+| **Frontend** | React 19, Vite 8, Tailwind CSS v4, React Router v7, Axios |
+| **Backend** | Node.js, Express 5, ES Modules |
+| **Database / ORM** | PostgreSQL 15 (Alpine), Prisma 7 |
+| **Authentication** | JWT, bcrypt, Google Auth Library, OTP (otp-generator + Nodemailer) |
+| **Containerization** | Docker Compose |
+| **Linting** | OxLint (frontend) |
+| **Version Control** | Git |
 
 ---
 
@@ -88,29 +90,56 @@ All components are fully **containerized with Docker Compose** for seamless loca
 
 ```
 GlobeTrotter/
-├── client/                    # React + Vite frontend
+├── backend/
+│   ├── prisma/
+│   │   ├── schema.prisma          # Full data model (8 models, 3 enums)
+│   │   ├── seed.js                # Seed script for cities & activities
+│   │   └── migrations/            # Prisma migration history
 │   ├── src/
-│   │   ├── pages/             # Login, MyTrips, CreateTrip, ItineraryBuilder, etc.
-│   │   ├── components/        # Reusable UI components
-│   │   └── ...
-│   └── Dockerfile
+│   │   ├── app.js                 # Express app setup (CORS, JSON, routes)
+│   │   ├── server.js              # Server entry point
+│   │   ├── config/
+│   │   │   └── db.js              # Database configuration
+│   │   ├── controllers/
+│   │   │   ├── auth.controller.js     # Register, login, Google OAuth, OTP reset
+│   │   │   ├── trip.controller.js     # Trip CRUD, stops, stop-activities, public share
+│   │   │   ├── city.controller.js     # City listing & search
+│   │   │   ├── activity.controller.js # Activity listing
+│   │   │   └── budget.controller.js   # Expense logging & budget breakdown
+│   │   ├── middlewares/
+│   │   │   └── auth.middleware.js     # JWT verification middleware
+│   │   ├── routes/
+│   │   │   ├── index.js               # Route aggregator (/api/auth, /api/core)
+│   │   │   ├── auth.route.js          # Auth endpoints
+│   │   │   └── core.route.js          # Core business endpoints
+│   │   └── utils/
+│   │       ├── jwt.js                 # JWT sign/verify helpers
+│   │       ├── prisma.js             # Prisma client singleton
+│   │       ├── email.js              # Nodemailer transporter
+│   │       ├── otpUtils.js           # OTP generation
+│   │       └── googleAuthUtils.js    # Google token verification
+│   ├── docker-compose.yml         # PostgreSQL container definition
+│   └── package.json
 │
-├── services/
-│   ├── auth-service/          # Express — signup, login, JWT
-│   │   ├── prisma/
-│   │   ├── src/
-│   │   └── Dockerfile
-│   │
-│   └── core-service/          # Express — trips, stops, activities, budget, catalog
-│       ├── prisma/
-│       ├── src/
-│       └── Dockerfile
+├── frontend/
+│   ├── public/                    # Static assets (favicon, icons)
+│   ├── src/
+│   │   ├── main.jsx               # App entry point
+│   │   ├── App.jsx                # Root component with routing
+│   │   ├── App.css / index.css    # Global styles
+│   │   ├── assets/                # Images (hero.png, etc.)
+│   │   └── pages/
+│   │       ├── Auth/              # Login, signup, password reset
+│   │       ├── Dashboard/         # Trip listing / home
+│   │       ├── TripBuilder/       # Itinerary builder
+│   │       ├── Budget/            # Expense tracking & breakdown
+│   │       └── Profile/           # User profile & settings
+│   ├── vite.config.js
+│   └── package.json
 │
-├── db/
-│   └── init.sql               # Creates `auth` and `core` schemas on first boot
-│
-├── docker-compose.yml         # Orchestrates all 4 containers
-├── .env                       # Shared environment variables
+├── .agents/                       # AI agent configurations
+├── GlobeTrotter_Implementation_Plan.md
+├── GlobeTrotter.pdf               # Original project brief
 └── README.md
 ```
 
@@ -118,53 +147,61 @@ GlobeTrotter/
 
 ## 🗃️ Database Schema
 
-### `auth` Schema
+The Prisma schema defines **8 models** and **3 enums**:
 
-| Table | Columns |
+### Models
+
+| Model | Key Fields | Description |
+|---|---|---|
+| **User** | `email`, `passwordHash`, `name`, `photoUrl`, `googleId`, `resetOtp`, `role` | Supports email & Google OAuth, OTP password reset, admin roles |
+| **City** | `name`, `country`, `region`, `costIndex`, `popularityScore`, `imageUrl` | Seeded catalog of travel destinations |
+| **Activity** | `cityId`, `name`, `category`, `cost`, `durationMinutes`, `description` | City-specific activities (Sightseeing, Food, Adventure, Relaxation) |
+| **Trip** | `userId`, `name`, `startDate`, `endDate`, `isPublic`, `shareSlug` | User-created trips with optional public sharing |
+| **TripStop** | `tripId`, `cityId`, `arrivalDate`, `departureDate`, `sortOrder` | Ordered city stops within a trip |
+| **StopActivity** | `tripStopId`, `activityId`, `scheduledTime`, `customCost` | Activities attached to a specific stop |
+| **TripExpense** | `tripId`, `tripStopId`, `category`, `amount`, `description` | Logged expenses (Transport, Stay, Meals, Misc) |
+| **SavedDestination** | `userId`, `cityId` | User's bookmarked cities |
+
+### Enums
+
+| Enum | Values |
 |---|---|
-| `users` | `id`, `email`, `password_hash`, `name`, `created_at` |
-
-### `core` Schema
-
-| Table | Columns |
-|---|---|
-| `cities` | `id`, `name`, `country`, `cost_index`, `image_url` |
-| `activities` | `id`, `city_id`, `name`, `category`, `cost`, `duration_minutes`, `description` |
-| `trips` | `id`, `user_id`, `name`, `start_date`, `end_date`, `description`, `is_public`, `share_slug`, `created_at` |
-| `trip_stops` | `id`, `trip_id`, `city_id`, `arrival_date`, `departure_date`, `sort_order` |
-| `stop_activities` | `id`, `trip_stop_id`, `activity_id`, `scheduled_time`, `custom_cost` |
-
-> **Seeded data:** ~15–20 cities and ~40–60 activities are pre-loaded for a realistic demo experience.
+| `Role` | `USER`, `ADMIN` |
+| `ActivityCategory` | `SIGHTSEEING`, `FOOD`, `ADVENTURE`, `RELAXATION` |
+| `ExpenseCategory` | `TRANSPORT`, `STAY`, `MEALS`, `MISC` |
 
 ---
 
 ## 🔌 API Endpoints
 
-### Auth Service (`localhost:4001`)
+All API routes are mounted under `/api`.
 
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/api/auth/signup` | Register a new user |
-| `POST` | `/api/auth/login` | Login and receive JWT |
-| `GET` | `/api/auth/me` | Get current user profile (Bearer token) |
+### Auth Routes — `/api/auth`
 
-### Core Service (`localhost:4002`)
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| `POST` | `/register` | ❌ | Register with email & password |
+| `POST` | `/login` | ❌ | Login and receive JWT |
+| `POST` | `/google` | ❌ | Google OAuth authentication |
+| `POST` | `/forgot-password` | ❌ | Request OTP for password reset |
+| `POST` | `/reset-password` | ❌ | Reset password with OTP |
+| `GET` | `/me` | ✅ | Get current user profile |
 
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/cities?search=` | Search cities |
-| `GET` | `/api/cities/:id/activities` | List activities for a city |
-| `POST` | `/api/trips` | Create a new trip |
-| `GET` | `/api/trips` | List user's trips |
-| `GET` | `/api/trips/:id` | Get trip details |
-| `PATCH` | `/api/trips/:id` | Update a trip |
-| `DELETE` | `/api/trips/:id` | Delete a trip |
-| `POST` | `/api/trips/:id/stops` | Add a city stop to a trip |
-| `DELETE` | `/api/trips/:id/stops/:stopId` | Remove a stop |
-| `POST` | `/api/trips/:id/stops/:stopId/activities` | Add an activity to a stop |
-| `DELETE` | `/api/trips/:id/stops/:stopId/activities/:activityId` | Remove an activity |
-| `GET` | `/api/trips/:id/budget` | Get budget breakdown |
-| `GET` | `/api/public/:shareSlug` | View shared trip (no auth) |
+### Core Routes — `/api/core`
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| `GET` | `/cities` | ❌ | List/search all cities |
+| `GET` | `/cities/:id` | ❌ | Get city details |
+| `GET` | `/activities` | ❌ | List activities (filterable) |
+| `GET` | `/public/trips/:shareSlug` | ❌ | View a shared trip |
+| `POST` | `/trips` | ✅ | Create a new trip |
+| `GET` | `/trips` | ✅ | List current user's trips |
+| `GET` | `/trips/:id` | ✅ | Get trip with stops & activities |
+| `POST` | `/trips/:id/stops` | ✅ | Add a city stop to a trip |
+| `POST` | `/trips/:id/stops/:stopId/activities` | ✅ | Add an activity to a stop |
+| `POST` | `/trips/:id/expenses` | ✅ | Log an expense |
+| `GET` | `/trips/:id/budget` | ✅ | Get trip budget breakdown |
 
 ---
 
@@ -172,100 +209,126 @@ GlobeTrotter/
 
 ### Prerequisites
 
-- [Docker](https://www.docker.com/) & Docker Compose installed
+- [Node.js](https://nodejs.org/) (v18+)
+- [Docker](https://www.docker.com/) & Docker Compose
 - [Git](https://git-scm.com/)
 
-### Run the Application
+### 1. Clone the Repository
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/<your-username>/GlobeTrotter.git
-cd GlobeTrotter
-
-# 2. Create a .env file (see Environment Variables section below)
-cp .env.example .env
-
-# 3. Start all services
-docker compose up --build
-
-# 4. Open the app
-# Frontend:      http://localhost:5173
-# Auth Service:  http://localhost:4001
-# Core Service:  http://localhost:4002
+git clone https://github.com/yugdave2005/GlobeTrotter-YUG-SAMARTH.git
+cd GlobeTrotter-YUG-SAMARTH
 ```
 
-### Stop the Application
+### 2. Start the Database
 
 ```bash
-docker compose down
+cd backend
+docker compose up -d
 ```
+
+This starts PostgreSQL 15 on **port 5433** with persistent storage.
+
+### 3. Set Up the Backend
+
+```bash
+# Install dependencies
+npm install
+
+# Create .env file (see Environment Variables section)
+
+# Run Prisma migrations
+npx prisma migrate deploy
+
+# Seed the database
+npx prisma db seed
+
+# Start the dev server
+npm run dev
+```
+
+### 4. Set Up the Frontend
+
+```bash
+cd ../frontend
+
+# Install dependencies
+npm install
+
+# Start the dev server
+npm run dev
+```
+
+### 5. Open the App
+
+| Service | URL |
+|---|---|
+| Frontend | http://localhost:5173 |
+| Backend API | http://localhost:3000 |
+| Health Check | http://localhost:3000/health |
 
 ---
 
 ## 🔧 Environment Variables
 
-Create a `.env` file in the project root:
+Create a `.env` file in the `backend/` directory:
 
 ```env
-# PostgreSQL
-POSTGRES_DB=globetrotter
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=postgres
+# Database
+DATABASE_URL="postgresql://postgres:supersecretpassword@localhost:5433/globetrotter"
 
-# Auth Service
-DATABASE_URL=postgresql://postgres:postgres@postgres:5432/globetrotter?schema=auth
-JWT_SECRET=your-secret-key
+# JWT
+JWT_SECRET="your-jwt-secret-key"
 
-# Core Service
-CORE_DATABASE_URL=postgresql://postgres:postgres@postgres:5432/globetrotter?schema=core
+# Google OAuth
+GOOGLE_CLIENT_ID="your-google-client-id"
+
+# Email (for OTP password reset)
+EMAIL_HOST="smtp.gmail.com"
+EMAIL_PORT=587
+EMAIL_USER="your-email@gmail.com"
+EMAIL_PASS="your-app-password"
 ```
 
 ---
 
 ## 🖥️ Screens & UI
 
-The application includes **8 core screens**, prioritized for the hackathon:
-
-| # | Screen | Description |
-|---|---|---|
-| 1 | **Login / Signup** | Combined auth form |
-| 2 | **My Trips** | Dashboard listing all user trips |
-| 3 | **Create Trip** | Form for name, dates, and description |
-| 4 | **Itinerary Builder** | Core feature — add cities as stops, attach activities |
-| 5 | **City / Activity Search** | Search and filter from the seeded catalog |
-| 6 | **Itinerary View** | Grouped-by-city read-only view |
-| 7 | **Budget Breakdown** | Total + per-category costs with a pie chart |
-| 8 | **Public Share View** | Read-only page accessible via a unique share link |
+| Page | Description |
+|---|---|
+| **Auth** | Login, signup, Google OAuth, forgot/reset password |
+| **Dashboard** | Overview of user's trips |
+| **Trip Builder** | Core feature — add cities as stops, attach activities, build itineraries |
+| **Budget** | Log expenses and view per-trip budget breakdowns by category |
+| **Profile** | User profile and settings |
 
 ---
 
-## 🎯 Design Decisions & Tradeoffs
-
-These tradeoffs were made deliberately for the 8-hour hackathon window:
+## 🎯 Design Decisions
 
 | Decision | Rationale |
 |---|---|
-| **2 services** instead of 3+ | Ensures a finished, demo-able product over an incomplete architecture |
-| **Single PostgreSQL** with 2 schemas | Logical separation without the overhead of multiple DB containers |
-| **No API gateway (Nginx)** | Plain CORS on Express keeps setup simple; direct service calls from the client |
-| **No refresh tokens** | A single long-lived JWT (7-day expiry) is sufficient for a demo |
-| **No image uploads** | Placeholder images used instead of building file upload handling |
-| **No RabbitMQ / Redis / CI** | These are 36hr+ additions that add setup risk with no demo upside |
-| **Seeded catalog data** | Hardcoded cities/activities instead of an admin CRUD panel |
+| **Monolithic backend** with route-level separation | Faster to develop in 8hrs while maintaining clean code boundaries (`/auth` vs `/core`) |
+| **Prisma ORM** | Type-safe queries, auto-generated migrations, built-in seeding |
+| **Google OAuth + OTP reset** | Production-grade auth without heavy infrastructure |
+| **Docker for DB only** | PostgreSQL container with health checks; backend/frontend run natively for faster dev iteration |
+| **Tailwind CSS v4** | Utility-first styling with latest features and performance |
+| **Seeded city/activity data** | Realistic demo without needing an admin panel |
 
 ---
 
-## 👥 Team & Workflow
+## 👥 Team
 
-| Role | Responsibility |
+| Member | Role |
 |---|---|
-| **Person A** — Backend & DevOps | Both services, Prisma models, migrations, seed data, Docker Compose |
-| **Person B** — Frontend | All React screens, API integration, UI/UX |
+| **Yug Dave** | Full-Stack Development |
+| **Samarth** | Full-Stack Development |
 
 ### Git Strategy
-- **Trunk-based** — single `main` branch with strict file ownership to avoid conflicts.
-- Commits every ~30 minutes, push after every commit.
-- A clear `MVP DEMO READY` commit marks the working end-to-end flow.
+
+- Trunk-based — single `main` branch
+- Regular commits & pushes
+- Clear `MVP DEMO READY` checkpoint
 
 ---
 
