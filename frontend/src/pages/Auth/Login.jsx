@@ -128,7 +128,7 @@ export default function Login() {
           <div className="mt-6 flex justify-center">
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
-              onError={() => setError('Google Sign In failed')}
+              onError={() => toast.error('Google Sign In failed')}
               useOneTap
               shape="pill"
             />

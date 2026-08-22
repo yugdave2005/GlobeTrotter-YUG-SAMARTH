@@ -16,3 +16,15 @@ initSocket(server);
 server.listen(PORT, () => {
   console.log(`Backend server (with WebSockets) running on port ${PORT}`);
 });
+
+// Graceful shutdown on nodemon restart and process exit
+const shutdown = () => {
+  server.close(() => {
+    process.exit(0);
+  });
+};
+
+process.once('SIGUSR2', shutdown);
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);
+

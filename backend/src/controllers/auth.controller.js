@@ -119,7 +119,7 @@ export const forgotPassword = async (req, res) => {
     const { email } = req.body;
     const user = await prisma.user.findUnique({ where: { email } });
     
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (!user) return res.status(404).json({ message: 'User not found with this email' });
     
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
@@ -130,7 +130,22 @@ export const forgotPassword = async (req, res) => {
     });
     
     await sendOTP(email, otp);
-    res.json({ message: 'OTP sent to email' });
+    res.json({ message: 'OTP sent to email successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const verifyOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    const user = await prisma.user.findUnique({ where: { email } });
+    
+    if (!user || user.resetOtp !== otp || !user.resetOtpExpires || new Date() > user.resetOtpExpires) {
+      return res.status(400).json({ message: 'Invalid or expired OTP' });
+    }
+    
+    res.json({ message: 'OTP verified successfully', valid: true });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -141,7 +156,7 @@ export const resetPassword = async (req, res) => {
     const { email, otp, newPassword } = req.body;
     const user = await prisma.user.findUnique({ where: { email } });
     
-    if (!user || user.resetOtp !== otp || new Date() > user.resetOtpExpires) {
+    if (!user || user.resetOtp !== otp || !user.resetOtpExpires || new Date() > user.resetOtpExpires) {
       return res.status(400).json({ message: 'Invalid or expired OTP' });
     }
     
