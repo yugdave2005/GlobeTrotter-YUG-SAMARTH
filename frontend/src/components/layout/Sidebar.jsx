@@ -45,16 +45,6 @@ export const Sidebar = ({ onSettingsClick }) => {
           </NavLink>
         ))}
       </nav>
-
-      <div className="p-6 border-t border-gray-50">
-        <NavLink
-          to="/dashboard/settings"
-          className="flex w-full items-center px-4 py-3 rounded-2xl font-semibold text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors"
-        >
-          <Settings size={20} className="mr-3 text-gray-400" />
-          Personalization
-        </NavLink>
-      </div>
     </div>
   );
 };
