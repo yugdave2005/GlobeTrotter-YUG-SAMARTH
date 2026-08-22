@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Plus, Calendar, MapPin, Compass, Wallet, ArrowRight, 
   Sparkles, TrendingUp, DollarSign, Clock, Users, X, 
-  ChevronRight, CheckCircle, Search, Star, Plane, Layers
+  ChevronRight, CheckCircle, Search, Star, Plane, Layers, Trash2
 } from 'lucide-react';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
