@@ -240,83 +240,30 @@ export default function ItineraryBuilder() {
     }
   }, [trip?.endDate]);
 
-  // Real-time socket sync with strict deduplication
+  // Real-time socket sync — just refetch on any trip mutation event
+  // This avoids race conditions between socket payloads (which may lack
+  // nested relations like city/activity) and fetchTripData() which returns
+  // the complete trip with all relations from the database.
   useEffect(() => {
     if (!socket) return;
     socket.emit('join_trip', tripId);
 
-    const handleStopAdded = (newStop) => {
-      setTrip(prev => {
-        if (!prev) return prev;
-        if (prev.stops?.some(s => s.id === newStop.id)) return prev;
-        return {
-          ...prev,
-          stops: [...(prev.stops || []), newStop]
-        };
-      });
+    const handleTripMutation = () => {
+      fetchTripData();
     };
 
-    const handleStopDeleted = (deletedStopId) => {
-      setTrip(prev => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          stops: prev.stops?.filter(s => s.id !== deletedStopId) || []
-        };
-      });
-    };
-
-    const handleActivityAdded = ({ stopId, stopActivity }) => {
-      setTrip(prev => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          stops: prev.stops.map(s => {
-            if (s.id === stopId) {
-              if (s.activities?.some(a => a.id === stopActivity.id || (a.activity?.name === stopActivity.activity?.name))) {
-                return s;
-              }
-              return {
-                ...s,
-                activities: [...(s.activities || []), stopActivity]
-              };
-            }
-            return s;
-          })
-        };
-      });
-    };
-
-    const handleActivityDeleted = ({ stopId, activityId }) => {
-      setTrip(prev => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          stops: prev.stops.map(s => {
-            if (s.id === stopId) {
-              return {
-                ...s,
-                activities: s.activities?.filter(a => a.id !== activityId) || []
-              };
-            }
-            return s;
-          })
-        };
-      });
-    };
-
-    socket.on('stop_added', handleStopAdded);
-    socket.on('stop_deleted', handleStopDeleted);
-    socket.on('activity_added', handleActivityAdded);
-    socket.on('activity_deleted', handleActivityDeleted);
+    socket.on('stop_added', handleTripMutation);
+    socket.on('stop_deleted', handleTripMutation);
+    socket.on('activity_added', handleTripMutation);
+    socket.on('activity_deleted', handleTripMutation);
 
     return () => {
-      socket.off('stop_added', handleStopAdded);
-      socket.off('stop_deleted', handleStopDeleted);
-      socket.off('activity_added', handleActivityAdded);
-      socket.off('activity_deleted', handleActivityDeleted);
+      socket.off('stop_added', handleTripMutation);
+      socket.off('stop_deleted', handleTripMutation);
+      socket.off('activity_added', handleTripMutation);
+      socket.off('activity_deleted', handleTripMutation);
     };
-  }, [socket, tripId]);
+  }, [socket, tripId, fetchTripData]);
 
   const fetchTripData = useCallback(async () => {
     try {
@@ -324,36 +271,40 @@ export default function ItineraryBuilder() {
       setTrip(data);
       setBudgetInput(data.budget || 50000);
     } catch (err) {
-      setTrip({
-        id: tripId,
-        name: 'Kerala Backwaters & Hills Tour 🌴',
-        description: 'A tranquil tropical voyage across Kochi, Munnar, and Alleppey.',
-        startDate: '2026-08-22',
-        endDate: '2026-08-27',
-        coverPhotoUrl: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&q=80&w=1200',
-        shareSlug: 'kerala-tour-2026',
-        budget: 160000,
-        stops: [
-          {
-            id: 'stop-kerala-1',
-            city: {
-              name: 'Kochi (Cochin)',
-              country: 'India',
-              imageUrl: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&q=80&w=800'
-            },
-            arrivalDate: '2026-08-22',
-            departureDate: '2026-08-24',
-            activities: [
-              {
-                id: 'act-k1',
-                activity: { name: 'Fort Kochi Kathakali Dance & Martial Arts Show', category: 'SIGHTSEEING', cost: 800, durationMinutes: 120 },
-                customCost: 800
-              }
-            ]
-          }
-        ]
+      // ONLY set fallback data if this is the initial load (no trip data exists yet).
+      // Never overwrite real trip data with hardcoded fallback on a refetch error.
+      setTrip(prev => {
+        if (prev && prev.stops) return prev; // Keep existing data
+        return {
+          id: tripId,
+          name: 'Kerala Backwaters & Hills Tour 🌴',
+          description: 'A tranquil tropical voyage across Kochi, Munnar, and Alleppey.',
+          startDate: '2026-08-22',
+          endDate: '2026-08-27',
+          coverPhotoUrl: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&q=80&w=1200',
+          shareSlug: 'kerala-tour-2026',
+          budget: 160000,
+          stops: [
+            {
+              id: 'stop-kerala-1',
+              city: {
+                name: 'Kochi (Cochin)',
+                country: 'India',
+                imageUrl: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&q=80&w=800'
+              },
+              arrivalDate: '2026-08-22',
+              departureDate: '2026-08-24',
+              activities: [
+                {
+                  id: 'act-k1',
+                  activity: { name: 'Fort Kochi Kathakali Dance & Martial Arts Show', category: 'SIGHTSEEING', cost: 800, durationMinutes: 120 },
+                  customCost: 800
+                }
+              ]
+            }
+          ]
+        };
       });
-      setBudgetInput(160000);
     } finally {
       setLoading(false);
     }
