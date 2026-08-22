@@ -1,120 +1,525 @@
-# 🌍 GlobeTrotter — Smart Travel Itinerary Planner
+# 🌍 GlobeTrotter — Smart Travel Itinerary Planner & Real-Time Expense Tracker
 
 <p align="center">
-  <strong>Plan trips · Build itineraries · Track budgets · Discover destinations · Share with community</strong>
+  <img src="photos/41-globetrotter-brand-logo.png" alt="GlobeTrotter Logo" width="120" />
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white" alt="React 19" />
-  <img src="https://img.shields.io/badge/Express-5-000000?logo=express&logoColor=white" alt="Express 5" />
-  <img src="https://img.shields.io/badge/PostgreSQL-15-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL" />
-  <img src="https://img.shields.io/badge/Prisma-7-2D3748?logo=prisma&logoColor=white" alt="Prisma" />
-  <img src="https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white" alt="Docker" />
-  <img src="https://img.shields.io/badge/Socket.IO-4-010101?logo=socket.io&logoColor=white" alt="Socket.IO" />
-  <img src="https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white" alt="Tailwind" />
+  <strong>AI-Powered Itineraries · GPS Route Mapping · Live Budget Deduction · Destination Discovery · PDF Export · Real-Time Collaboration</strong>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/React-19.0.0-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React 19" />
+  <img src="https://img.shields.io/badge/Vite-8.2.2-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite" />
+  <img src="https://img.shields.io/badge/Express-5.2.1-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express 5" />
+  <img src="https://img.shields.io/badge/PostgreSQL-15-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/Prisma-7.4.0-2D3748?style=for-the-badge&logo=prisma&logoColor=white" alt="Prisma" />
+  <img src="https://img.shields.io/badge/Socket.IO-4.8.1-010101?style=for-the-badge&logo=socket.io&logoColor=white" alt="Socket.IO" />
+  <img src="https://img.shields.io/badge/Leaflet-1.9.4-199900?style=for-the-badge&logo=leaflet&logoColor=white" alt="Leaflet" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-4.0-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
 </p>
 
 ---
 
 ## 📌 Table of Contents
 
-- [About](#about)
-- [Key Features](#key-features)
-- [Architecture](#architecture)
-- [Tech Stack](#tech-stack)
-- [Project Structure](#project-structure)
-- [Database Schema](#database-schema)
-- [API Reference](#api-reference)
-- [Getting Started](#getting-started)
-- [Environment Variables](#environment-variables)
-- [Page & Feature Status](#page--feature-status)
-- [Design Decisions](#design-decisions)
-- [Team](#team)
-- [License](#license)
+1. [Overview](#-overview)
+2. [Visual Walkthrough & Screenshot Gallery](#-visual-walkthrough--screenshot-gallery)
+3. [System Architecture & Data Flow](#-system-architecture--data-flow)
+4. [User Journey & Workflow Diagrams](#-user-journey--workflow-diagrams)
+5. [Smart Itinerary Recommendation Engine](#-smart-itinerary-recommendation-engine)
+6. [Real-Time WebSocket Synchronization Flow](#-real-time-websocket-synchronization-flow)
+7. [Database ER Diagram & Schema](#-database-er-diagram--schema)
+8. [Core Feature Breakdown](#-core-feature-breakdown)
+9. [REST API Reference](#-rest-api-reference)
+10. [Getting Started & Local Setup](#-getting-started--local-setup)
+11. [Environment Variables](#-environment-variables)
+12. [Project Structure](#-project-structure)
 
 ---
 
-## 📖 About
+## 📖 Overview
 
-**GlobeTrotter** is a full-stack smart travel itinerary planning application designed to revolutionize trip planning. It offers an all-in-one experience for travelers to discover destinations, generate intelligent itineraries based on personal preferences, manage trip budgets, collaborate in real time, and share travel plans with the community.
+**GlobeTrotter** is a modern full-stack travel planning platform built to simplify how modern travelers organize, budget, and visualize vacations. 
 
-Built with **React 19**, **Express 5**, **Prisma 7**, **PostgreSQL**, and **Socket.IO**, GlobeTrotter delivers high-performance interactivity wrapped in a sleek, responsive design.
+From smart itinerary generation and multi-city stop sequencing to real-time expense deduction, GPS route mapping with Leaflet, and professional PDF export, GlobeTrotter delivers an intuitive travel management experience.
 
 ---
 
-## ✨ Key Features
+## 🖼️ Visual Walkthrough & Screenshot Gallery
 
-| Feature | Description |
+### 1. Authentication & Secure Onboarding
+Complete authentication lifecycle supporting direct email/password login, Google OAuth integration, and automated 6-digit OTP verification via Nodemailer for secure password recovery.
+
+<p align="center">
+  <img src="photos/01-auth-signin.png" alt="Sign In Screen" width="48%" />
+  <img src="photos/02-auth-signup.png" alt="Sign Up Screen" width="48%" />
+</p>
+<p align="center">
+  <img src="photos/04-auth-otp-verification.png" alt="OTP Verification" width="48%" />
+  <img src="photos/08-auth-password-reset-confirmed.png" alt="Password Reset Success" width="48%" />
+</p>
+
+---
+
+### 2. Dashboard Overview & Notifications
+Centralized travel mission control displaying quick trip stats, upcoming journey countdowns, budget utilization meters, and real-time notification alerts.
+
+<p align="center">
+  <img src="photos/10-dashboard-overview.png" alt="Dashboard Overview" width="48%" />
+  <img src="photos/11-notifications-popover.png" alt="Real-time Notification Alerts" width="48%" />
+</p>
+
+---
+
+### 3. Smart Dynamic Itinerary Assistant
+Configurable automated trip generator that creates multi-day itineraries based on travel style, companion profile, pace, and spending budget tiers with pre-calculated financial allocations across stays, transport, meals, and sightseeing.
+
+<p align="center">
+  <img src="photos/12-smart-planner-package-selection.png" alt="Curated Packages" width="48%" />
+  <img src="photos/13-smart-planner-destination-choice.png" alt="Destination Choice" width="48%" />
+</p>
+<p align="center">
+  <img src="photos/14-smart-planner-travel-persona.png" alt="Travel Persona Selection" width="48%" />
+  <img src="photos/15-smart-planner-budget-breakdown.png" alt="Budget Category Allocation" width="48%" />
+</p>
+
+---
+
+### 4. Interactive Itinerary Builder & Dynamic Expense Deductor
+Detailed day-by-day itinerary management. Add destination stops with strict date-collision guardrails, schedule curated 1-click activities, and watch allocated trip budgets deduct dynamically in real time.
+
+<p align="center">
+  <img src="photos/16-itinerary-builder-timeline.png" alt="Itinerary Timeline View" width="48%" />
+  <img src="photos/20-itinerary-builder-budget-deductor.png" alt="Dynamic Budget Deductor Bar" width="48%" />
+</p>
+<p align="center">
+  <img src="photos/18-itinerary-builder-assign-activity.png" alt="Curated Activity Selection" width="48%" />
+  <img src="photos/19-itinerary-builder-custom-activity.png" alt="Custom Activity Form" width="48%" />
+</p>
+
+---
+
+### 5. Interactive GPS Route Map & Travel Schedule
+Visual route map powered by Leaflet & OpenStreetMap tiles. Displays glowing connecting paths between sequential destinations, custom numbered pulse markers, and activity detail popups.
+
+<p align="center">
+  <img src="photos/21-itinerary-builder-interactive-map.png" alt="Interactive GPS Route Map" width="100%" />
+</p>
+<p align="center">
+  <img src="photos/22-itinerary-builder-calendar-view.png" alt="Calendar Schedule Matrix" width="48%" />
+  <img src="photos/24-public-itinerary-view.png" alt="Public Shareable Link View" width="48%" />
+</p>
+
+---
+
+### 6. My Trips & Itinerary Management
+Comprehensive trip organizer featuring search filtering, active/upcoming/completed status segmentation, quick deletion confirmation modals, and one-click sharing.
+
+<p align="center">
+  <img src="photos/26-my-trips-dashboard-grid.png" alt="My Trips Grid" width="48%" />
+  <img src="photos/27-my-trips-filtering-search.png" alt="My Trips Search & Filters" width="48%" />
+</p>
+
+---
+
+### 7. Discover Destinations & Pricing Benchmarks
+Explore worldwide and domestic destinations featuring estimated daily budget indices, 5-day package cost estimates, and direct 1-click itinerary integration.
+
+<p align="center">
+  <img src="photos/28-discover-destinations-overview.png" alt="Discover Destinations" width="48%" />
+  <img src="photos/29-discover-destinations-pricing-cards.png" alt="Destination Pricing Cards" width="48%" />
+</p>
+<p align="center">
+  <img src="photos/30-discover-destination-activities-modal.png" alt="Destination Activities Modal" width="48%" />
+  <img src="photos/31-discover-add-to-trip-flow.png" alt="Add Destination to Itinerary" width="48%" />
+</p>
+
+---
+
+### 8. Budget & Expense Tracking
+Trip-by-trip financial ledger aggregating scheduled itinerary activity costs with logged on-trip expenses across Stays, Transport, Food, and Sightseeing.
+
+<p align="center">
+  <img src="photos/32-budget-tracker-overview.png" alt="Budget Tracker Overview" width="48%" />
+  <img src="photos/33-budget-tracker-category-breakdown.png" alt="Spending Category Breakdown" width="48%" />
+</p>
+<p align="center">
+  <img src="photos/34-budget-tracker-transaction-ledger.png" alt="Itemized Transaction Ledger" width="100%" />
+</p>
+
+---
+
+### 9. Account & Travel Persona Preferences
+Sticky mini-sidebar navigation allowing users to customize avatar styles (DiceBear), personal travel personas, budget comfort tiers, and preferred pace.
+
+<p align="center">
+  <img src="photos/35-settings-sidebar-avatar-picker.png" alt="Settings & Avatar Picker" width="48%" />
+  <img src="photos/37-settings-travel-style-persona.png" alt="Travel Persona Preferences" width="48%" />
+</p>
+<p align="center">
+  <img src="photos/38-settings-pace-and-budget-tiers.png" alt="Pace & Budget Preferences" width="48%" />
+  <img src="photos/39-settings-companions-interests.png" alt="Companions & Interest Tags" width="48%" />
+</p>
+
+---
+
+## 🏗️ System Architecture & Data Flow
+
+```mermaid
+graph TB
+    subgraph Client Layer ["Frontend (React 19 + Vite 8)"]
+        UI[User Interface / Pages]
+        State[React Context & State]
+        SocketClient[Socket.IO Client]
+        LeafletMap[Leaflet GPS Map Engine]
+        PDFEngine[jsPDF Generator]
+    end
+
+    subgraph Gateway Layer ["API & Real-Time Gateway"]
+        AuthRoute["/api/auth (JWT, OAuth, OTP)"]
+        CoreRoute["/api/core (Trips, Stops, Activities, Budget)"]
+        SocketServer["Socket.IO Server (Rooms per tripId)"]
+    end
+
+    subgraph Service Layer ["Backend Controllers & Business Logic"]
+        TripController[Trip & Itinerary Controller]
+        BudgetController[Budget Calculation Engine]
+        AuthController[Authentication & Mailer Service]
+        CityController[Destination Search Engine]
+    end
+
+    subgraph Persistence Layer ["Database & Cache"]
+        PrismaORM[Prisma 7 ORM]
+        PostgreSQL[(PostgreSQL 15 Database)]
+        BrevoSMTP[Brevo / Nodemailer SMTP Service]
+    end
+
+    UI -->|REST API Calls| AuthRoute
+    UI -->|REST API Calls| CoreRoute
+    State <-->|Bi-directional Sync| SocketClient
+    SocketClient <-->|WebSockets| SocketServer
+    UI --> LeafletMap
+    UI --> PDFEngine
+
+    AuthRoute --> AuthController
+    CoreRoute --> TripController
+    CoreRoute --> BudgetController
+    CoreRoute --> CityController
+    SocketServer <--> TripController
+
+    AuthController --> PrismaORM
+    AuthController --> BrevoSMTP
+    TripController --> PrismaORM
+    BudgetController --> PrismaORM
+    CityController --> PrismaORM
+
+    PrismaORM <--> PostgreSQL
+```
+
+---
+
+## 🔄 User Journey & Workflow Diagrams
+
+### 1. End-to-End Trip Planning Lifecycle
+
+```mermaid
+flowchart TD
+    Start([User Arrives]) --> Auth{Authenticated?}
+    Auth -- No --> SignUp[Sign Up / Login / Google OAuth]
+    Auth -- Yes --> Dash[Dashboard Home]
+    SignUp --> Dash
+
+    Dash --> PathChoice{Choose Creation Method}
+    PathChoice -- "Smart AI Planner" --> SmartModal[Open Smart Planner Modal]
+    PathChoice -- "Discover Page" --> Discover[Browse Destinations & Prices]
+    PathChoice -- "Manual Creation" --> Manual[Create Custom Trip]
+
+    SmartModal --> SelectPkg[Select Curated Destination Package]
+    SelectPkg --> CustomizePace[Tune Budget, Style & Pace]
+    CustomizePace --> AutoGenerate[Generate Itinerary & Stops]
+
+    Discover --> PickCity[Pick City with Budget Index]
+    PickCity --> AddCityToTrip[Add Destination as Trip Stop]
+
+    Manual --> Itinerary[Itinerary Builder Page]
+    AutoGenerate --> Itinerary
+    AddCityToTrip --> Itinerary
+
+    subgraph ItineraryManagement ["Itinerary Management & Live Deductions"]
+        Itinerary --> AddStops[Add / Reorder Stops with Date Validation]
+        AddStops --> AssignActs[Assign Activities: Curated / Custom]
+        AssignActs --> DeductBudget[Dynamic Budget Deduction in ₹]
+        DeductBudget --> ViewModes{Switch View Mode}
+        ViewModes -- Timeline --> TimelineView[Timeline Schedule Cards]
+        ViewModes -- Calendar --> CalView[Day-by-Day Calendar Grid]
+        ViewModes -- Route Map --> MapView[Interactive GPS Leaflet Map]
+    end
+
+    Itinerary --> ExportPDF[Export Formatted PDF Itinerary]
+    Itinerary --> SharePublic[Generate Shareable Public Link]
+    Itinerary --> TrackExpenses[Log Manual Expenses in Budget Tracker]
+```
+
+---
+
+## 🧠 Smart Itinerary Recommendation Engine
+
+```mermaid
+flowchart LR
+    UserPreferences["User Travel Profile\n(Style, Pace, Budget, Companions)"] --> Engine["Smart Recommendation\nAlgorithm"]
+    DestinationDB["Curated Destination\nDatabase (20+ Regions)"] --> Engine
+    ActivityDB["Activity Library\n(Sightseeing, Food, Adventure)"] --> Engine
+
+    Engine --> StopsOutput["Optimized Sequential\nDestination Stops"]
+    Engine --> BudgetMatrix["Budget Allocation Matrix:\n• Stays (40%)\n• Transport (35%)\n• Meals (15%)\n• Activities (10%)"]
+    Engine --> ActivitySchedule["Curated Daily\nActivity Roster"]
+```
+
+---
+
+## ⚡ Real-Time WebSocket Synchronization Flow
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor UserA as Traveler A (Desktop)
+    participant ClientA as React Frontend (A)
+    participant Server as Express + Socket.IO Server
+    participant DB as PostgreSQL (Prisma)
+    participant ClientB as Traveler B (Mobile)
+    actor UserB as Traveler B (Mobile)
+
+    UserA->>ClientA: Adds "Scuba Diving" to Stop (₹3,500)
+    ClientA->>Server: POST /api/core/trips/:id/stops/:stopId/activities
+    Server->>DB: INSERT into StopActivity & recalculate
+    DB-->>Server: StopActivity Record Created
+    Server-->>ClientA: 201 Created (Updated Stop Data)
+    Server->>Server: Broadcasts 'activity_added' to room tripId
+    Server-->>ClientB: Socket event 'activity_added'
+    ClientB->>Server: GET /api/core/trips/:id (Instant Auto-Sync)
+    Server-->>ClientB: Returns Updated Trip Structure
+    ClientB->>UserB: Re-renders itinerary & deducts ₹3,500 from budget
+```
+
+---
+
+## 🗄️ Database ER Diagram & Schema
+
+```mermaid
+erDiagram
+    User ||--o{ Trip : creates
+    User ||--o| TravelPreference : has
+    User ||--o{ Expense : logs
+    Trip ||--o{ TripStop : contains
+    Trip ||--o{ Expense : tracks
+    City ||--o{ TripStop : locates
+    City ||--o{ Activity : offers
+    TripStop ||--o{ StopActivity : schedules
+    Activity ||--o{ StopActivity : instances
+
+    User {
+        string id PK
+        string email UK
+        string name
+        string passwordHash
+        string googleId
+        string photoUrl
+        string otpCode
+        datetime otpExpiresAt
+        datetime createdAt
+    }
+
+    TravelPreference {
+        string id PK
+        string userId FK
+        string travelStyle
+        string travelPace
+        string budget
+        string companions
+        string[] interests
+        string[] priorities
+    }
+
+    Trip {
+        string id PK
+        string userId FK
+        string name
+        string description
+        datetime startDate
+        datetime endDate
+        float budget
+        string coverPhotoUrl
+        string shareSlug UK
+        boolean isPublic
+        datetime createdAt
+    }
+
+    TripStop {
+        string id PK
+        string tripId FK
+        string cityId FK
+        datetime arrivalDate
+        datetime departureDate
+        int sortOrder
+    }
+
+    City {
+        string id PK
+        string name
+        string country
+        string region
+        float costIndex
+        float popularityScore
+        string imageUrl
+    }
+
+    Activity {
+        string id PK
+        string cityId FK
+        string name
+        string category
+        float cost
+        int durationMinutes
+        string description
+    }
+
+    StopActivity {
+        string id PK
+        string tripStopId FK
+        string activityId FK
+        datetime scheduledTime
+        float customCost
+    }
+
+    Expense {
+        string id PK
+        string tripId FK
+        string userId FK
+        string title
+        float amount
+        string category
+        datetime date
+    }
+```
+
+---
+
+## 🚀 Core Feature Breakdown
+
+| Feature Module | Capabilities |
 |---|---|
-| 🔐 **Multi-Auth & Security** | Email/password login, Google OAuth, OTP password reset via Nodemailer |
-| 🤖 **Smart Itinerary Generator** | AI/Rule-based planner modal auto-crafting customized itineraries based on user travel style, pace, and budget |
-| 🗺️ **My Trips Dashboard** | Comprehensive trip manager with status filtering (Active, Upcoming, Completed), search, edit, delete, and share modals |
-| 📋 **Interactive Itinerary Builder** | Day-by-day itinerary view, city stop ordering, activity scheduling with custom costs and durations |
-| 🏙️ **Discover Destinations** | City exploration with search, popularity scores, cost index indicators, category filters, and saved destination bookmarking |
-| 💰 **Budget & Expense Tracker** | Real-time budget monitoring with per-category expense breakdown (Transport, Stay, Meals, Misc) and budget limit alerts |
-| 🌐 **Community Hub** | Social travel feed showcasing public trip itineraries shared by fellow travelers |
-| 🔗 **Public Itinerary Sharing** | Instant shareable read-only links (`/public/trips/:shareSlug`) for friends and public viewing |
-| ⚡ **Real-Time WebSockets** | Socket.IO room-based architecture for live collaborative trip updates |
-| 🔔 **Toast Notifications** | React Hot Toast for instant visual feedback on all user interactions |
-| 🎨 **Rich UI & Animations** | Framer Motion page transitions, Lucide React icons, dark/light theme accents with Tailwind CSS v4 |
+| 🔐 **Authentication & Security** | Email/password login with bcrypt hashing, Google Sign-In, 6-digit OTP verification email dispatch with expiration timer |
+| 🤖 **Smart Itinerary Planner** | AI-inspired multi-step wizard matching user personas to domestic & international travel routes with pre-configured budget splits |
+| 📋 **Itinerary Builder** | Timeline, Calendar, and Route Map view modes; collapsible stop cards; 1-click curated experiences; custom activity authoring |
+| 💰 **Dynamic Budget Deductor** | Real-time budget deduction progress bar changing colors (Emerald → Amber → Rose) based on utilization percentage |
+| 🗺️ **GPS Route Mapping** | Interactive Leaflet map with exact latitude/longitude coordinates, polyline pathways, numbered pulse pins, and activity popups |
+| 📄 **PDF Itinerary Export** | Professional formatted PDF download powered by `jsPDF` & `jspdf-autotable` with trip summaries, tables, and cost ledgers |
+| 🌐 **Destination Discovery** | 20+ domestic and international destinations with real-time daily cost benchmarks, average trip costs, and filters |
+| 📊 **Budget & Expense Tracker** | Comprehensive financial tracker merging planned stop activities with manual on-trip expenses in a unified ledger |
+| ⚙️ **Personalization & Settings** | Sticky mini-sidebar navigation, DiceBear avatar selector, travel persona preferences (Backpacker, Luxury, Heritage, Adventure) |
 
 ---
 
-## 🏗️ Architecture
+## 📡 REST API Reference
 
-```
-                    ┌─────────────────────────────┐
-                    │      Frontend (React)       │
-                    │      localhost:5173          │
-                    │  React 19 · Vite 8 · TW v4  │
-                    └──────┬──────────┬───────────┘
-                           │ Axios    │ Socket.IO
-                           │ REST     │ WebSocket
-                    ┌──────▼──────────▼───────────┐
-                    │      Backend (Express)       │
-                    │      localhost:5000          │
-                    │  Express 5 · Prisma 7 · JWT  │
-                    │  /api/auth · /api/core        │
-                    └──────────────┬───────────────┘
-                                   │ Prisma Client
-                    ┌──────────────▼───────────────┐
-                    │    PostgreSQL 15 (Docker)     │
-                    │    localhost:5433             │
-                    │    Volume: postgres_data      │
-                    └──────────────────────────────┘
-```
+### Authentication Endpoints (`/api/auth`)
+
+| Method | Endpoint | Description | Auth Required |
+|---|---|---|:---:|
+| `POST` | `/api/auth/register` | Register new user with email, name, and password | No |
+| `POST` | `/api/auth/login` | Authenticate user and receive JWT bearer token | No |
+| `POST` | `/api/auth/google` | Verify Google ID token and login/register | No |
+| `POST` | `/api/auth/forgot-password` | Send 6-digit OTP code to user's email | No |
+| `POST` | `/api/auth/verify-otp` | Validate 6-digit OTP code | No |
+| `POST` | `/api/auth/reset-password` | Reset account password with verified OTP | No |
+| `GET` | `/api/auth/me` | Fetch active user profile and preferences | Yes |
+| `PUT` | `/api/auth/profile` | Update profile details and travel preferences | Yes |
+
+### Core Trip & Itinerary Endpoints (`/api/core`)
+
+| Method | Endpoint | Description | Auth Required |
+|---|---|---|:---:|
+| `GET` | `/api/core/trips` | Get all trips created by authenticated user | Yes |
+| `POST` | `/api/core/trips` | Create a new trip itinerary | Yes |
+| `GET` | `/api/core/trips/:id` | Get detailed trip by ID (including stops & activities) | Yes |
+| `PUT` | `/api/core/trips/:id` | Update trip details or budget allocation | Yes |
+| `DELETE` | `/api/core/trips/:id` | Permanently delete trip and all nested stops | Yes |
+| `POST` | `/api/core/trips/:id/stops` | Add a destination stop to a trip itinerary | Yes |
+| `DELETE` | `/api/core/trips/:id/stops/:stopId` | Remove destination stop and its scheduled activities | Yes |
+| `POST` | `/api/core/trips/:id/stops/:stopId/activities` | Assign curated or custom activity to a stop | Yes |
+| `DELETE` | `/api/core/trips/:id/stops/:stopId/activities/:actId` | Remove activity and restore cost to trip budget | Yes |
+| `GET` | `/api/core/cities` | Search & filter destination cities with cost indices | Yes |
+| `GET` | `/api/core/public/trips/:shareSlug` | View public shared read-only itinerary | No |
 
 ---
 
-## 🛠️ Tech Stack
+## 🛠️ Getting Started & Local Setup
 
-### Backend
+### Prerequisites
+* **Node.js**: v18.0.0 or higher
+* **npm**: v9.0.0 or higher
+* **Docker & Docker Compose** (for PostgreSQL database)
 
-| Technology | Version | Purpose |
-|---|---|---|
-| Node.js + Express | 5.x | High-performance REST API server |
-| Prisma | 7.x | Database ORM, migrations, rich seed scripts |
-| PostgreSQL | 15 Alpine | Primary relational database |
-| Socket.IO | 4.x | WebSockets for real-time trip collaboration |
-| JWT + bcrypt | — | Secure token authentication & password hashing |
-| Google Auth Library | 11.x | Google OAuth token verification |
-| Nodemailer + otp-generator | — | Email OTP dispatch for password recovery |
-| Docker Compose | — | Containerized database environment |
+### 1. Clone the Repository
+```bash
+git clone https://github.com/your-username/GlobeTrotter.git
+cd GlobeTrotter
+```
 
-### Frontend
+### 2. Start PostgreSQL Database via Docker
+```bash
+cd backend
+docker compose up -d
+```
 
-| Technology | Version | Purpose |
-|---|---|---|
-| React | 19.x | Component-driven UI framework |
-| Vite | 8.x | Lightning-fast development server & bundler |
-| Tailwind CSS | 4.x | Modern utility-first CSS engine |
-| React Router | 7.x | SPA routing & layout nesting |
-| Axios | 1.x | HTTP client with bearer token interceptors |
-| Framer Motion | 13.x | UI animations & smooth card transitions |
-| Lucide React | 1.x | Vector icon suite |
-| React Hot Toast | 2.x | Flexible toast notification manager |
-| Socket.IO Client | 4.x | Client-side WebSocket integration |
-| @react-oauth/google | 0.13 | Native Google Sign-In button integration |
+### 3. Backend Setup
+```bash
+cd backend
+npm install
+npx prisma db push
+node prisma/seed.js
+npm run dev
+```
+*Backend server will start at `http://localhost:5001`.*
+
+### 4. Frontend Setup
+```bash
+cd ../frontend
+npm install
+npm run dev
+```
+*Frontend application will start at `http://localhost:5173`.*
+
+---
+
+## 🔑 Environment Variables
+
+### Backend Configuration (`backend/.env`)
+```env
+PORT=5001
+NODE_ENV=development
+DATABASE_URL="postgresql://postgres:postgres@localhost:5433/globetrotter?schema=public"
+JWT_SECRET="your_secure_jwt_random_secret_key"
+FRONTEND_URL="http://localhost:5173"
+
+# Email Delivery (Brevo / Nodemailer)
+EMAIL_HOST="smtp-relay.brevo.com"
+EMAIL_PORT=587
+EMAIL_USER="your_smtp_user@mail.com"
+EMAIL_PASS="your_smtp_password"
+EMAIL_FROM="GlobeTrotter <noreply@globetrotter.app>"
+
+# Google OAuth
+GOOGLE_CLIENT_ID="your_google_oauth_client_id.apps.googleusercontent.com"
+```
+
+### Frontend Configuration (`frontend/.env`)
+```env
+VITE_API_URL="http://localhost:5001/api"
+VITE_SOCKET_URL="http://localhost:5001"
+VITE_GOOGLE_CLIENT_ID="your_google_oauth_client_id.apps.googleusercontent.com"
+```
 
 ---
 
@@ -122,298 +527,43 @@ Built with **React 19**, **Express 5**, **Prisma 7**, **PostgreSQL**, and **Sock
 
 ```
 GlobeTrotter/
-│
 ├── backend/
 │   ├── prisma/
-│   │   ├── schema.prisma              # 9 Prisma models, 3 enums
-│   │   ├── seed.js                    # Rich seed dataset (cities, activities, destinations)
-│   │   └── migrations/               # Database migration history
+│   │   ├── schema.prisma          # Database models (Trip, Stop, Activity, User)
+│   │   └── seed.js                # Initial database seed data (cities, activities)
 │   ├── src/
-│   │   ├── app.js                     # Express app configuration & CORS
-│   │   ├── server.js                  # HTTP server, Socket.IO & graceful shutdown handling
-│   │   ├── config/
-│   │   │   └── db.js                  # DB connections
-│   │   ├── controllers/
-│   │   │   ├── auth.controller.js     # Auth, Google OAuth, OTP reset, profile updates
-│   │   │   ├── trip.controller.js     # Smart trip creation, CRUD, stop & activity management
-│   │   │   ├── city.controller.js     # City search, details, popularity & cost index
-│   │   │   ├── activity.controller.js # Activity discovery by category & city
-│   │   │   └── budget.controller.js   # Expense logging & budget breakdown calculations
-│   │   ├── middlewares/
-│   │   │   └── auth.middleware.js     # JWT bearer authentication guard
-│   │   ├── routes/
-│   │   │   ├── index.js              # Central API router (/api/auth, /api/core)
-│   │   │   ├── auth.route.js         # Authentication & profile routes
-│   │   │   └── core.route.js         # Core trip, city, activity & budget routes
-│   │   └── utils/
-│   │       ├── prisma.js             # Shared Prisma Client instance
-│   │       ├── jwt.js                # Token sign & verify utilities
-│   │       ├── socket.js             # Socket.IO rooms & connection handlers
-│   │       ├── email.js              # HTML email template sender
-│   │       ├── otpUtils.js           # Secure numeric OTP generator
-│   │       └── googleAuthUtils.js    # Google OAuth ID token verifier
-│   ├── docker-compose.yml            # PostgreSQL container config
+│   │   ├── controllers/           # Auth, Trip, City, Budget route handlers
+│   │   ├── middleware/            # JWT auth & error handling middleware
+│   │   ├── routes/                # Express API router configuration
+│   │   ├── utils/                 # Prisma client, Nodemailer, Socket.IO instance
+│   │   └── server.js              # Express app entry point
+│   ├── docker-compose.yml         # PostgreSQL 15 container definition
 │   └── package.json
 │
 ├── frontend/
-│   ├── public/                        # Public static assets & icons
 │   ├── src/
-│   │   ├── main.jsx                   # Entry point with Google OAuth & Router context
-│   │   ├── App.jsx                    # Top-level routing & layout switcher
-│   │   ├── App.css / index.css        # Global CSS & Tailwind imports
-│   │   ├── assets/                    # Static image assets
-│   │   ├── components/
-│   │   │   ├── AnimatedCard.jsx       # Framer Motion animated card component
-│   │   │   ├── SettingsModal.jsx      # User settings & preference modal
-│   │   │   ├── SmartItineraryPlannerModal.jsx # Smart AI-driven itinerary planner modal
-│   │   │   └── layout/
-│   │   │       ├── LandingLayout.jsx  # Public page wrapper
-│   │   │       ├── DashboardLayout.jsx# Protected dashboard layout
-│   │   │       ├── Sidebar.jsx        # Dashboard sidebar navigation
-│   │   │       └── Topbar.jsx         # Dashboard topbar navigation
-│   │   ├── context/
-│   │   │   └── SocketContext.jsx      # WebSocket connection provider
+│   │   ├── components/            # Reusable UI components (TripRouteMap, Modals)
+│   │   ├── context/               # Auth & Socket.IO React Context providers
 │   │   ├── pages/
-│   │   │   ├── Landing.jsx            # Product landing page
-│   │   │   ├── DashboardHome.jsx      # User dashboard overview & stats
-│   │   │   ├── Discover/
-│   │   │   │   └── Discover.jsx       # Destination & activity explorer
-│   │   │   ├── Trips/
-│   │   │   │   ├── MyTrips.jsx        # Trip management hub & creation modal
-│   │   │   │   └── ItineraryBuilder.jsx # Interactive day-by-day itinerary planner
-│   │   │   ├── Budget/
-│   │   │   │   └── BudgetTracker.jsx   # Expense logger & category breakdown
-│   │   │   ├── Community/
-│   │   │   │   └── Community.jsx      # Social showcase for public trip itineraries
-│   │   │   ├── PublicItinerary.jsx    # Read-only public share trip page
-│   │   │   └── Auth/
-│   │   │       ├── Login.jsx          # Login view
-│   │   │       ├── Register.jsx       # Registration with preference onboarding
-│   │   │       ├── ForgotPasswordModal.jsx # OTP verification modal
-│   │   │       └── routes.jsx         # Auth route definitions
-│   │   └── utils/
-│   │       └── api.js                 # Axios client with request interceptors
+│   │   │   ├── Auth/              # Login, Register, Forgot Password, Reset Password
+│   │   │   ├── DashboardHome.jsx  # Main travel command center
+│   │   │   ├── Trips/             # My Trips Grid, ItineraryBuilder
+│   │   │   ├── Discover/          # Destination search & pricing benchmarks
+│   │   │   ├── Budget/            # Expense breakdown & transaction ledger
+│   │   │   └── Settings/          # User profile & travel persona preferences
+│   │   ├── App.jsx                # Application routes & layout wrapper
+│   │   ├── main.jsx               # React 19 root bootstrap
+│   │   └── index.css              # Tailwind CSS v4 & Leaflet style imports
+│   ├── index.html
 │   ├── vite.config.js
 │   └── package.json
 │
-├── .agents/                           # AI assistant workflow configs
-├── GlobeTrotter_Implementation_Plan.md
-├── GlobeTrotter.pdf                   # Original design brief
-└── README.md
+├── photos/                        # Full UI walkthrough screenshot assets
+└── README.md                      # Primary project documentation
 ```
-
----
-
-## 🗃️ Database Schema
-
-### Models & Definitions
-
-| Model | Key Fields | Description |
-|---|---|---|
-| **User** | `email`, `passwordHash`, `name`, `photoUrl`, `googleId`, `resetOtp`, `resetOtpExpires`, `role`, `languagePreference` | User account with OAuth & OTP support |
-| **TravelPreference** | `userId`, `interests[]`, `travelStyle`, `travelPace`, `budget`, `companions`, `priorities[]` | Personal travel profile |
-| **City** | `name`, `country`, `region`, `costIndex`, `popularityScore`, `imageUrl` | Curated city destination catalog |
-| **Activity** | `cityId`, `name`, `category`, `cost`, `durationMinutes`, `description`, `imageUrl` | Discoverable activities mapped to cities |
-| **Trip** | `userId`, `name`, `description`, `startDate`, `endDate`, `coverPhotoUrl`, `budget`, `isPublic`, `shareSlug` | Core trip entity with shareable slug |
-| **TripStop** | `tripId`, `cityId`, `arrivalDate`, `departureDate`, `sortOrder` | Ordered city stop within a trip itinerary |
-| **StopActivity** | `tripStopId`, `activityId`, `scheduledTime`, `customCost` | Scheduled activity attached to a trip stop |
-| **TripExpense** | `tripId`, `tripStopId`, `category`, `amount`, `description` | Itemized expense for budget calculations |
-| **SavedDestination** | `userId`, `cityId` | User saved/bookmarked cities |
-
-### Enums
-
-- **`Role`**: `USER`, `ADMIN`
-- **`ActivityCategory`**: `SIGHTSEEING`, `FOOD`, `ADVENTURE`, `RELAXATION`
-- **`ExpenseCategory`**: `TRANSPORT`, `STAY`, `MEALS`, `MISC`
-
-### Entity Relationship Diagram
-
-```mermaid
-erDiagram
-    User ||--o| TravelPreference : has
-    User ||--o{ Trip : creates
-    User ||--o{ SavedDestination : saves
-    City ||--o{ Activity : offers
-    City ||--o{ TripStop : visited_in
-    City ||--o{ SavedDestination : saved_by
-    Trip ||--o{ TripStop : contains
-    Trip ||--o{ TripExpense : tracks
-    TripStop ||--o{ StopActivity : schedules
-    TripStop ||--o{ TripExpense : incurs
-    Activity ||--o{ StopActivity : booked_as
-```
-
----
-
-## 🔌 API Reference
-
-Base URL: `http://localhost:5000/api`
-
-### Auth Endpoints (`/api/auth`)
-
-| Method | Endpoint | Auth Required | Description |
-|---|---|---|---|
-| `POST` | `/register` | ❌ | Register user account + initial travel preferences |
-| `POST` | `/login` | ❌ | Authenticate credentials & return JWT |
-| `POST` | `/google` | ❌ | Authenticate via Google OAuth ID token |
-| `POST` | `/forgot-password` | ❌ | Send 6-digit OTP code to email |
-| `POST` | `/reset-password` | ❌ | Verify OTP and reset password |
-| `GET` | `/me` | ✅ | Fetch current user profile |
-| `PUT` | `/profile` | ✅ | Update profile info & travel preferences |
-
-### Core Endpoints (`/api/core`)
-
-#### Public Discovery & Sharing
-
-| Method | Endpoint | Auth Required | Description |
-|---|---|---|---|
-| `GET` | `/cities` | ❌ | List/search all cities with cost index & popularity |
-| `GET` | `/cities/:id` | ❌ | Get city details with associated activities |
-| `GET` | `/activities` | ❌ | List activities by category & city |
-| `GET` | `/public/trips/:shareSlug` | ❌ | Fetch a publicly shared trip itinerary |
-
-#### Trip & Itinerary Operations (JWT Protected)
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/trips` | Create a new trip |
-| `GET` | `/trips` | List all trips created by the logged-in user |
-| `GET` | `/trips/:id` | Get full trip details (stops, activities, expenses) |
-| `PUT` | `/trips/:id` | Update trip details |
-| `DELETE` | `/trips/:id` | Delete a trip |
-| `POST` | `/trips/:id/stops` | Add a city stop to a trip |
-| `POST` | `/trips/:id/stops/:stopId/activities` | Attach an activity to a trip stop |
-| `POST` | `/trips/:id/expenses` | Log a trip expense |
-| `GET` | `/trips/:id/budget` | Get computed budget breakdown and totals |
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-- [Node.js](https://nodejs.org/) (v18 or higher)
-- [Docker](https://www.docker.com/) & Docker Compose
-- [Git](https://git-scm.com/)
-
-### 1. Clone Repository
-
-```bash
-git clone https://github.com/yugdave2005/GlobeTrotter-YUG-SAMARTH.git
-cd GlobeTrotter-YUG-SAMARTH
-```
-
-### 2. Start PostgreSQL via Docker
-
-```bash
-cd backend
-docker compose up -d
-```
-> PostgreSQL 15 will start on **`localhost:5433`** with persistent volume storage.
-
-### 3. Setup & Start Backend
-
-```bash
-# Install backend packages
-npm install
-
-# Apply database schema migrations
-npx prisma migrate deploy
-
-# Seed database with cities & activities
-npx prisma db seed
-
-# Launch Express dev server
-npm run dev
-```
-> Backend API runs at **`http://localhost:5000`**.
-
-### 4. Setup & Start Frontend
-
-```bash
-cd ../frontend
-
-# Install frontend packages
-npm install
-
-# Launch Vite dev server
-npm run dev
-```
-> Frontend application runs at **`http://localhost:5173`**.
-
----
-
-## 🔧 Environment Variables
-
-Create a `.env` file in the `backend/` directory:
-
-```env
-# Server Configuration
-PORT=5000
-
-# Database Connection (Docker Compose)
-DATABASE_URL="postgresql://postgres:supersecretpassword@localhost:5433/globetrotter"
-
-# JWT Secret
-JWT_SECRET="your-jwt-secret-key"
-
-# Google OAuth Client ID
-GOOGLE_CLIENT_ID="your-google-client-id.apps.googleusercontent.com"
-
-# Email / OTP Settings (Nodemailer)
-EMAIL_HOST="smtp.gmail.com"
-EMAIL_PORT=587
-EMAIL_USER="your-email@gmail.com"
-EMAIL_PASS="your-gmail-app-password"
-```
-
----
-
-## 🖥️ Page & Feature Status
-
-| Page / Component | Route | Status | Key Functionality |
-|---|---|---|---|
-| **Landing** | `/` | ✅ Fully Built | Hero, feature highlights, call to action |
-| **Login** | `/auth/login` | ✅ Fully Built | Email/Password + Google OAuth |
-| **Register** | `/auth/register` | ✅ Fully Built | Account setup + preference onboarding |
-| **Dashboard Home** | `/dashboard` | ✅ Fully Built | Quick stats, trip overview, recent activity |
-| **My Trips** | `/dashboard/trips` | ✅ Fully Built | Active/Upcoming/Completed tabs, create modal, share modal |
-| **Itinerary Builder** | `/dashboard/trips/:id` | ✅ Fully Built | Interactive stops, activity attachment, day timelines |
-| **Smart Itinerary Planner** | Modal | ✅ Fully Built | AI/Rule-based trip generation wizard |
-| **Discover** | `/dashboard/discover` | ✅ Fully Built | City search, category filters, saved destinations |
-| **Budget Tracker** | `/dashboard/budget` | ✅ Fully Built | Expense logger, category pie breakdown, budget limits |
-| **Community** | `/dashboard/community` | ✅ Fully Built | Public itinerary feed, social trip sharing |
-| **Public Itinerary** | `/public/trips/:shareSlug` | ✅ Fully Built | Unauthenticated read-only trip viewer |
-
----
-
-## 🎯 Design Decisions
-
-| Decision | Rationale |
-|---|---|
-| **Monolithic Backend** | Unified Express API architecture allowing rapid development while maintaining clean `/api/auth` and `/api/core` routing modules |
-| **Prisma ORM** | Type-safe database queries, auto-generated migrations, and robust seed scripts for instant setup |
-| **Socket.IO Integration** | Room-based real-time WebSocket communication enabling live collaborative itinerary editing |
-| **Tailwind CSS v4 & Framer Motion** | Utility-first responsive design coupled with hardware-accelerated animations for a modern UX |
-| **Docker-based Database** | Isolated PostgreSQL environment ensuring consistent developer environments across team members |
-
----
-
-## 👥 Team
-
-| Member | Role | GitHub |
-|---|---|---|
-| **Yug Dave** | Full-Stack Developer | [@yugdave2005](https://github.com/yugdave2005) |
-| **Samarth** | Full-Stack Developer | [@samarth](https://github.com/yugdave2005) |
-
----
-
-## 📄 License
-
-This project was developed for a hackathon & academic showcase. Feel free to fork and build upon it!
 
 ---
 
 <p align="center">
-  Made with ❤️ by the GlobeTrotter Team
+  Built with ❤️ for travelers worldwide by the <strong>GlobeTrotter Team</strong>.
 </p>
