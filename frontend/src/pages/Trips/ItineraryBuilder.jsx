@@ -224,47 +224,6 @@ export default function ItineraryBuilder() {
     description: ''
   });
 
-  useEffect(() => {
-    fetchTripData();
-    fetchCities();
-  }, [tripId]);
-
-  // Auto-switch to map view when trip has ended
-  useEffect(() => {
-    if (trip?.endDate) {
-      const tripEndTime = new Date(trip.endDate).getTime();
-      const now = Date.now();
-      if (now > tripEndTime && viewMode === 'timeline') {
-        setViewMode('map');
-      }
-    }
-  }, [trip?.endDate]);
-
-  // Real-time socket sync — just refetch on any trip mutation event
-  // This avoids race conditions between socket payloads (which may lack
-  // nested relations like city/activity) and fetchTripData() which returns
-  // the complete trip with all relations from the database.
-  useEffect(() => {
-    if (!socket) return;
-    socket.emit('join_trip', tripId);
-
-    const handleTripMutation = () => {
-      fetchTripData();
-    };
-
-    socket.on('stop_added', handleTripMutation);
-    socket.on('stop_deleted', handleTripMutation);
-    socket.on('activity_added', handleTripMutation);
-    socket.on('activity_deleted', handleTripMutation);
-
-    return () => {
-      socket.off('stop_added', handleTripMutation);
-      socket.off('stop_deleted', handleTripMutation);
-      socket.off('activity_added', handleTripMutation);
-      socket.off('activity_deleted', handleTripMutation);
-    };
-  }, [socket, tripId, fetchTripData]);
-
   const fetchTripData = useCallback(async () => {
     try {
       const { data } = await api.get(`/core/trips/${tripId}`);
@@ -321,6 +280,44 @@ export default function ItineraryBuilder() {
       console.log('Using fallback cities');
     }
   };
+
+  useEffect(() => {
+    fetchTripData();
+    fetchCities();
+  }, [tripId]);
+
+  // Auto-switch to map view when trip has ended
+  useEffect(() => {
+    if (trip?.endDate) {
+      const tripEndTime = new Date(trip.endDate).getTime();
+      const now = Date.now();
+      if (now > tripEndTime && viewMode === 'timeline') {
+        setViewMode('map');
+      }
+    }
+  }, [trip?.endDate]);
+
+  // Real-time socket sync — just refetch on any trip mutation event
+  useEffect(() => {
+    if (!socket) return;
+    socket.emit('join_trip', tripId);
+
+    const handleTripMutation = () => {
+      fetchTripData();
+    };
+
+    socket.on('stop_added', handleTripMutation);
+    socket.on('stop_deleted', handleTripMutation);
+    socket.on('activity_added', handleTripMutation);
+    socket.on('activity_deleted', handleTripMutation);
+
+    return () => {
+      socket.off('stop_added', handleTripMutation);
+      socket.off('stop_deleted', handleTripMutation);
+      socket.off('activity_added', handleTripMutation);
+      socket.off('activity_deleted', handleTripMutation);
+    };
+  }, [socket, tripId, fetchTripData]);
 
   // Detect which destination region matches the active trip
   const matchedRegion = useMemo(() => {
