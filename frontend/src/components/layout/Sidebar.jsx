@@ -8,6 +8,7 @@ const navItems = [
   { name: 'My Trips', icon: Map, path: '/dashboard/trips' },
   { name: 'Discover', icon: Compass, path: '/dashboard/discover' },
   { name: 'Budget', icon: Wallet, path: '/dashboard/budget' },
+  { name: 'Settings', icon: Settings, path: '/dashboard/settings' },
 ];
 
 export const Sidebar = ({ onSettingsClick }) => {
@@ -46,13 +47,13 @@ export const Sidebar = ({ onSettingsClick }) => {
       </nav>
 
       <div className="p-6 border-t border-gray-50">
-        <button
-          onClick={onSettingsClick}
-          className="flex w-full items-center px-4 py-3 rounded-2xl font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+        <NavLink
+          to="/dashboard/settings"
+          className="flex w-full items-center px-4 py-3 rounded-2xl font-semibold text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors"
         >
           <Settings size={20} className="mr-3 text-gray-400" />
-          Settings
-        </button>
+          Personalization
+        </NavLink>
       </div>
     </div>
   );

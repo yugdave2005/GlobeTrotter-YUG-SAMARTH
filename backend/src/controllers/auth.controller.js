@@ -178,7 +178,7 @@ export const getProfile = async (req, res) => {
   try {
     const user = await prisma.user.findUnique({ 
       where: { id: req.user.id },
-      include: { savedDestinations: true }
+      include: { savedDestinations: true, preferences: true }
     });
     
     if (!user) return res.status(404).json({ message: 'User not found' });
@@ -186,6 +186,7 @@ export const getProfile = async (req, res) => {
     res.json({ 
       id: user.id, email: user.email, name: user.name, 
       photoUrl: user.photoUrl, languagePreference: user.languagePreference,
+      preferences: user.preferences,
       savedDestinations: user.savedDestinations
     });
   } catch (error) {
@@ -195,14 +196,36 @@ export const getProfile = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-    const { photoUrl, name, languagePreference } = req.body;
+    const { photoUrl, name, languagePreference, preferences } = req.body;
     
     const user = await prisma.user.update({
       where: { id: req.user.id },
       data: { 
         ...(photoUrl !== undefined && { photoUrl }),
         ...(name !== undefined && { name }),
-        ...(languagePreference !== undefined && { languagePreference })
+        ...(languagePreference !== undefined && { languagePreference }),
+        ...(preferences && {
+          preferences: {
+            upsert: {
+              create: {
+                interests: preferences.interests || [],
+                travelStyle: preferences.travelStyle || 'Balanced',
+                travelPace: preferences.travelPace || 'Balanced',
+                budget: preferences.budget || 'Moderate',
+                companions: preferences.companions || 'Solo',
+                priorities: preferences.priorities || []
+              },
+              update: {
+                ...(preferences.interests !== undefined && { interests: preferences.interests }),
+                ...(preferences.travelStyle !== undefined && { travelStyle: preferences.travelStyle }),
+                ...(preferences.travelPace !== undefined && { travelPace: preferences.travelPace }),
+                ...(preferences.budget !== undefined && { budget: preferences.budget }),
+                ...(preferences.companions !== undefined && { companions: preferences.companions }),
+                ...(preferences.priorities !== undefined && { priorities: preferences.priorities })
+              }
+            }
+          }
+        })
       },
       include: { preferences: true }
     });
@@ -210,10 +233,12 @@ export const updateProfile = async (req, res) => {
     res.json({
       user: { 
         id: user.id, email: user.email, name: user.name, 
-        photoUrl: user.photoUrl, preferences: user.preferences
+        photoUrl: user.photoUrl, preferences: user.preferences,
+        languagePreference: user.languagePreference
       }
     });
   } catch (error) {
+    console.error('Error updating profile:', error);
     res.status(500).json({ message: error.message });
   }
 };

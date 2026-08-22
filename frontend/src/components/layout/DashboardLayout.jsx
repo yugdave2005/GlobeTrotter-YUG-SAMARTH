@@ -55,7 +55,7 @@ export const DashboardLayout = () => {
         />
         
         <main className="flex-1 overflow-y-auto px-10 pb-10">
-          <Outlet context={{ user, onUserUpdate: handleUserUpdate }} />
+          <Outlet context={{ user, onUserUpdate: handleUserUpdate, onUpdateUser: handleUserUpdate }} />
         </main>
       </div>
 

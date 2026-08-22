@@ -10,7 +10,7 @@ import MyTrips from './pages/Trips/MyTrips.jsx';
 import ItineraryBuilder from './pages/Trips/ItineraryBuilder.jsx';
 import Discover from './pages/Discover/Discover.jsx';
 import BudgetTracker from './pages/Budget/BudgetTracker.jsx';
-import Community from './pages/Community/Community.jsx';
+import Settings from './pages/Settings/Settings.jsx';
 import PublicItinerary from './pages/PublicItinerary.jsx';
 import AuthRoutes from './pages/Auth/routes.jsx';
 
@@ -35,7 +35,7 @@ function App() {
           <Route path="trips/:tripId" element={<ItineraryBuilder />} />
           <Route path="discover" element={<Discover />} />
           <Route path="budget" element={<BudgetTracker />} />
-          {/* <Route path="community" element={<Community />} /> */}
+          <Route path="settings" element={<Settings />} />
         </Route>
 
         {/* Catch all */}

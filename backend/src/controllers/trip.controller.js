@@ -111,22 +111,49 @@ export const getTripById = async (req, res) => {
 
 export const addStop = async (req, res) => {
   try {
-    const { cityId, arrivalDate, departureDate, sortOrder } = req.body;
+    const { cityId, cityName, arrivalDate, departureDate, sortOrder } = req.body;
     const tripId = req.params.id;
     
+    let targetCityId = cityId;
+
+    if (cityName) {
+      let existingCity = await prisma.city.findFirst({
+        where: { name: { equals: cityName, mode: 'insensitive' } }
+      });
+
+      if (!existingCity) {
+        existingCity = await prisma.city.create({
+          data: {
+            name: cityName,
+            country: 'India',
+            region: 'Asia',
+            costIndex: 2,
+            popularityScore: 92
+          }
+        });
+      }
+      targetCityId = existingCity.id;
+    }
+
+    if (!targetCityId) {
+      const defaultCity = await prisma.city.findFirst();
+      targetCityId = defaultCity?.id;
+    }
+
     const parsedArrival = arrivalDate ? new Date(arrivalDate) : new Date();
-    const parsedDeparture = departureDate ? new Date(departureDate) : new Date(Date.now() + 3 * 86400000);
+    const parsedDeparture = departureDate ? new Date(departureDate) : new Date(Date.now() + 2 * 86400000);
 
     const stop = await prisma.tripStop.create({
       data: {
         tripId,
-        cityId,
+        cityId: targetCityId,
         arrivalDate: isNaN(parsedArrival.getTime()) ? new Date() : parsedArrival,
-        departureDate: isNaN(parsedDeparture.getTime()) ? new Date(Date.now() + 3 * 86400000) : parsedDeparture,
+        departureDate: isNaN(parsedDeparture.getTime()) ? new Date(Date.now() + 2 * 86400000) : parsedDeparture,
         sortOrder: sortOrder || 1
       },
       include: {
-        city: true
+        city: true,
+        activities: { include: { activity: true } }
       }
     });
 

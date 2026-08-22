@@ -447,6 +447,8 @@ export default function ItineraryBuilder() {
 
   const handleAddStop = async (e) => {
     e.preventDefault();
+    const targetCityName = stopForm.cityName || 'New Stop';
+
     try {
       let targetCityId = stopForm.cityId;
       let matchedCityObj = cities.find(c => c.id === targetCityId);
@@ -458,24 +460,34 @@ export default function ItineraryBuilder() {
 
       const payload = {
         cityId: targetCityId,
+        cityName: targetCityName,
         arrivalDate: stopForm.arrivalDate || trip?.startDate || new Date().toISOString(),
-        departureDate: stopForm.departureDate || trip?.endDate || new Date(Date.now() + 3 * 86400000).toISOString(),
+        departureDate: stopForm.departureDate || trip?.endDate || new Date(Date.now() + 2 * 86400000).toISOString(),
         sortOrder: (trip?.stops?.length || 0) + 1
       };
 
       const { data } = await api.post(`/core/trips/${tripId}/stops`, payload);
+      
+      const formattedStop = {
+        ...data,
+        city: {
+          ...(data.city || {}),
+          name: targetCityName
+        }
+      };
+
       setTrip(prev => {
         if (prev?.stops?.some(s => s.id === data.id)) return prev;
         return {
           ...prev,
-          stops: [...(prev?.stops || []), data]
+          stops: [...(prev?.stops || []), formattedStop]
         };
       });
       setIsAddStopOpen(false);
-      toast.success(`Added ${matchedCityObj?.name || 'stop'} to itinerary! 📍`);
+      toast.success(`Added ${targetCityName} to itinerary! 📍`);
     } catch (err) {
-      const chosenCity = cities.find(c => c.id === stopForm.cityId) || { 
-        name: stopForm.cityName || 'New Destination Stop', 
+      const chosenCity = { 
+        name: targetCityName, 
         country: 'India' 
       };
       const localStop = {
@@ -486,14 +498,13 @@ export default function ItineraryBuilder() {
         activities: []
       };
       setTrip(prev => {
-        if (prev?.stops?.some(s => s.city?.name === chosenCity.name)) return prev;
         return {
           ...prev,
           stops: [...(prev?.stops || []), localStop]
         };
       });
       setIsAddStopOpen(false);
-      toast.success('Destination stop added! 📍');
+      toast.success(`Added ${targetCityName} to itinerary! 📍`);
     }
   };
 
@@ -777,16 +788,31 @@ export default function ItineraryBuilder() {
 
           <button
             onClick={() => {
-              if (nearbySuggestedPlaces.length > 0) {
-                const firstNearby = nearbySuggestedPlaces[0];
-                const matchedDb = cities.find(c => c.name.toLowerCase().includes(firstNearby.name.toLowerCase().split(' ')[0]));
-                setStopForm({
-                  cityId: matchedDb?.id || (cities[0]?.id || ''),
-                  cityName: firstNearby.name,
-                  arrivalDate: trip?.startDate ? trip.startDate.split('T')[0] : '',
-                  departureDate: trip?.endDate ? trip.endDate.split('T')[0] : ''
-                });
+              const existingNames = (trip?.stops || []).map(s => (s.city?.name || '').toLowerCase());
+              const nextUnusedPlace = nearbySuggestedPlaces.find(p => !existingNames.some(en => en.includes(p.name.toLowerCase().split(' ')[0]) || p.name.toLowerCase().includes(en.split(' ')[0]))) || nearbySuggestedPlaces[0];
+
+              let nextArrival = trip?.startDate ? trip.startDate.split('T')[0] : new Date().toISOString().split('T')[0];
+              let nextDeparture = new Date(Date.now() + 2 * 86400000).toISOString().split('T')[0];
+
+              if (trip?.stops && trip.stops.length > 0) {
+                const lastStop = trip.stops[trip.stops.length - 1];
+                if (lastStop.departureDate) {
+                  const lastDepTime = new Date(lastStop.departureDate).getTime();
+                  if (!isNaN(lastDepTime)) {
+                    nextArrival = new Date(lastDepTime).toISOString().split('T')[0];
+                    nextDeparture = new Date(lastDepTime + 2 * 86400000).toISOString().split('T')[0];
+                  }
+                }
               }
+
+              const matchedDb = cities.find(c => c.name.toLowerCase().includes(nextUnusedPlace.name.toLowerCase().split(' ')[0]));
+              setStopForm({
+                cityId: matchedDb?.id || (cities[0]?.id || ''),
+                cityName: nextUnusedPlace.name,
+                arrivalDate: nextArrival,
+                departureDate: nextDeparture
+              });
+
               setIsAddStopOpen(true);
             }}
             className="bg-sky-600 hover:bg-sky-700 active:scale-95 text-white font-bold px-6 py-3.5 rounded-2xl text-sm shadow-lg shadow-sky-600/30 transition flex items-center space-x-2 shrink-0 cursor-pointer"

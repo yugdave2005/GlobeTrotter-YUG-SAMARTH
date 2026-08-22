@@ -255,12 +255,12 @@ export const Topbar = ({ onSettingsClick, user, onLogout }) => {
                 <button 
                   onClick={() => {
                     setDropdownOpen(false);
-                    onSettingsClick();
+                    navigate('/dashboard/settings');
                   }}
-                  className="w-full flex items-center px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                  className="w-full flex items-center px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
                 >
                   <Settings size={17} className="mr-3 text-slate-400" />
-                  Settings & Avatar
+                  Settings & Personalization
                 </button>
                 
                 <div className="h-px bg-slate-100 my-1.5" />
