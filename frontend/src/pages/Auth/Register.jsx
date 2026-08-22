@@ -86,7 +86,7 @@ export default function Register() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-140px)] rounded-3xl overflow-hidden shadow-2xl bg-white border border-gray-100 max-w-5xl mx-auto">
+    <div className="flex min-h-[calc(100vh-140px)] rounded-3xl overflow-hidden shadow-2xl bg-white border border-gray-100 max-w-5xl mx-auto">
       
       {/* Visual Progress Section (Desktop) */}
       <div className="hidden lg:flex lg:w-1/3 bg-gray-50 border-r border-gray-100 flex-col p-8 justify-between">

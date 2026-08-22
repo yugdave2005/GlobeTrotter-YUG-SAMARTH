@@ -177,3 +177,28 @@ export const getProfile = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const updateProfile = async (req, res) => {
+  try {
+    const { photoUrl, name, languagePreference } = req.body;
+    
+    const user = await prisma.user.update({
+      where: { id: req.user.id },
+      data: { 
+        ...(photoUrl !== undefined && { photoUrl }),
+        ...(name !== undefined && { name }),
+        ...(languagePreference !== undefined && { languagePreference })
+      },
+      include: { preferences: true }
+    });
+    
+    res.json({
+      user: { 
+        id: user.id, email: user.email, name: user.name, 
+        photoUrl: user.photoUrl, preferences: user.preferences
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

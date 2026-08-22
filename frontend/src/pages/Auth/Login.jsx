@@ -40,7 +40,7 @@ export default function Login() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-140px)] rounded-3xl overflow-hidden shadow-2xl bg-white border border-gray-100 max-w-6xl mx-auto">
+    <div className="flex min-h-[calc(100vh-140px)] rounded-3xl overflow-hidden shadow-2xl bg-white border border-gray-100 max-w-6xl mx-auto">
       {/* Visual Section - Hidden on mobile */}
       <div className="hidden lg:flex lg:w-1/2 relative bg-primary-600 items-center justify-center">
         <img 

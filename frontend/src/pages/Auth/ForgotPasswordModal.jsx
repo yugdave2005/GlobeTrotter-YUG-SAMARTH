@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../utils/api';
 import { Mail, Key, X, Lock, Eye, EyeOff } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function ForgotPasswordModal({ isOpen, onClose }) {
   const [step, setStep] = useState(1);
@@ -9,20 +10,17 @@ export default function ForgotPasswordModal({ isOpen, onClose }) {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [newPassword, setNewPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
-  const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSendOtp = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
     try {
       await api.post('/auth/forgot-password', { email });
       setStep(2);
-      setMsg('OTP sent to your email!');
+      toast.success('OTP sent to your email!');
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to send OTP');
+      toast.error(err.response?.data?.message || 'Failed to send OTP');
     } finally {
       setLoading(false);
     }
@@ -31,11 +29,10 @@ export default function ForgotPasswordModal({ isOpen, onClose }) {
   const handleVerifyAndReset = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
     try {
       const otpString = otp.join('');
       await api.post('/auth/reset-password', { email, otp: otpString, newPassword });
-      setMsg('Password reset successful! You can now log in.');
+      toast.success('Password reset successful! You can now log in.');
       setTimeout(() => {
         onClose();
         setStep(1);
@@ -43,10 +40,9 @@ export default function ForgotPasswordModal({ isOpen, onClose }) {
         setOtp(['', '', '', '', '', '']);
         setNewPassword('');
         setShowPassword(false);
-        setMsg('');
       }, 2000);
     } catch (err) {
-      setError(err.response?.data?.message || 'Invalid OTP or failed to reset');
+      toast.error(err.response?.data?.message || 'Invalid OTP or failed to reset');
     } finally {
       setLoading(false);
     }
@@ -77,9 +73,6 @@ export default function ForgotPasswordModal({ isOpen, onClose }) {
           
           <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Reset Password</h2>
           
-          {error && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-4">{error}</div>}
-          {msg && <div className="bg-green-50 text-green-600 p-3 rounded-lg text-sm mb-4">{msg}</div>}
-
           {step === 1 ? (
             <form onSubmit={handleSendOtp} className="space-y-4">
               <div>
