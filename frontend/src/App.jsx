@@ -35,7 +35,7 @@ function App() {
           <Route path="trips/:tripId" element={<ItineraryBuilder />} />
           <Route path="discover" element={<Discover />} />
           <Route path="budget" element={<BudgetTracker />} />
-          <Route path="community" element={<Community />} />
+          {/* <Route path="community" element={<Community />} /> */}
         </Route>
 
         {/* Catch all */}

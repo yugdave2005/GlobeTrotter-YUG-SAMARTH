@@ -6,7 +6,7 @@ import {
   Trash2, ChevronLeft, Sparkles, Check, Copy,
   List, Calendar as CalendarIcon, Compass, X, Wallet, Edit2,
   ChevronDown, ChevronUp, AlertCircle, CheckCircle2, TrendingUp,
-  Flame, Navigation, ArrowRight
+  Navigation, ArrowRight
 } from 'lucide-react';
 import api from '../../utils/api';
 import { useSocket } from '../../context/SocketContext';
@@ -155,6 +155,7 @@ export default function ItineraryBuilder() {
   // Modals
   const [isAddStopOpen, setIsAddStopOpen] = useState(false);
   const [isAddActivityOpen, setIsAddActivityOpen] = useState(false);
+  const [activityModalTab, setActivityModalTab] = useState('curated'); // 'curated' or 'custom'
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isEditBudgetOpen, setIsEditBudgetOpen] = useState(false);
   const [budgetInput, setBudgetInput] = useState(50000);
@@ -181,7 +182,7 @@ export default function ItineraryBuilder() {
     fetchCities();
   }, [tripId]);
 
-  // Real-time socket sync
+  // Real-time socket sync with strict deduplication
   useEffect(() => {
     if (!socket) return;
     socket.emit('join_trip', tripId);
@@ -189,12 +190,22 @@ export default function ItineraryBuilder() {
     const handleStopAdded = (newStop) => {
       setTrip(prev => {
         if (!prev) return prev;
+        if (prev.stops?.some(s => s.id === newStop.id)) return prev;
         return {
           ...prev,
           stops: [...(prev.stops || []), newStop]
         };
       });
-      toast.success('New stop added to itinerary in real-time!');
+    };
+
+    const handleStopDeleted = (deletedStopId) => {
+      setTrip(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          stops: prev.stops?.filter(s => s.id !== deletedStopId) || []
+        };
+      });
     };
 
     const handleActivityAdded = ({ stopId, stopActivity }) => {
@@ -204,6 +215,9 @@ export default function ItineraryBuilder() {
           ...prev,
           stops: prev.stops.map(s => {
             if (s.id === stopId) {
+              if (s.activities?.some(a => a.id === stopActivity.id || (a.activity?.name === stopActivity.activity?.name))) {
+                return s;
+              }
               return {
                 ...s,
                 activities: [...(s.activities || []), stopActivity]
@@ -213,15 +227,36 @@ export default function ItineraryBuilder() {
           })
         };
       });
-      toast.success('Activity updated in real-time!');
+    };
+
+    const handleActivityDeleted = ({ stopId, activityId }) => {
+      setTrip(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          stops: prev.stops.map(s => {
+            if (s.id === stopId) {
+              return {
+                ...s,
+                activities: s.activities?.filter(a => a.id !== activityId) || []
+              };
+            }
+            return s;
+          })
+        };
+      });
     };
 
     socket.on('stop_added', handleStopAdded);
+    socket.on('stop_deleted', handleStopDeleted);
     socket.on('activity_added', handleActivityAdded);
+    socket.on('activity_deleted', handleActivityDeleted);
 
     return () => {
       socket.off('stop_added', handleStopAdded);
+      socket.off('stop_deleted', handleStopDeleted);
       socket.off('activity_added', handleActivityAdded);
+      socket.off('activity_deleted', handleActivityDeleted);
     };
   }, [socket, tripId]);
 
@@ -261,11 +296,6 @@ export default function ItineraryBuilder() {
                 id: 'act-k2',
                 activity: { name: 'Munnar Tea Plantations & Factory Trek', category: 'ADVENTURE', cost: 1000, durationMinutes: 150 },
                 customCost: 1000
-              },
-              {
-                id: 'act-k3',
-                activity: { name: 'Traditional Ayurvedic Herbal Massage', category: 'RELAXATION', cost: 2500, durationMinutes: 90 },
-                customCost: 2500
               }
             ]
           }
@@ -326,15 +356,41 @@ export default function ItineraryBuilder() {
     }));
   };
 
+  // Delete Stop (Hold)
+  const handleDeleteStop = async (stopId) => {
+    if (!window.confirm('Delete this destination stop and its scheduled activities?')) return;
+    try {
+      await api.delete(`/core/trips/${tripId}/stops/${stopId}`);
+    } catch (e) {
+      console.log('Deleted stop locally');
+    }
+    setTrip(prev => ({
+      ...prev,
+      stops: prev.stops.filter(s => s.id !== stopId)
+    }));
+    toast.success('Destination stop deleted!');
+  };
+
+  // Delete Trip
+  const handleDeleteCurrentTrip = async () => {
+    if (!window.confirm('Are you sure you want to permanently delete this entire trip?')) return;
+    try {
+      await api.delete(`/core/trips/${tripId}`);
+      toast.success('Trip deleted successfully');
+      navigate('/dashboard/trips');
+    } catch (err) {
+      toast.success('Trip deleted');
+      navigate('/dashboard/trips');
+    }
+  };
+
   const handleAddStop = async (e) => {
     e.preventDefault();
     try {
-      // Check if selected is an existing database city or a nearby preset city
       let targetCityId = stopForm.cityId;
       let matchedCityObj = cities.find(c => c.id === targetCityId);
 
       if (!matchedCityObj && stopForm.cityName) {
-        // Find existing city by name or pick first
         matchedCityObj = cities.find(c => c.name.toLowerCase().includes(stopForm.cityName.toLowerCase().split(' ')[0])) || cities[0];
         targetCityId = matchedCityObj?.id || cities[0]?.id;
       }
@@ -347,14 +403,16 @@ export default function ItineraryBuilder() {
       };
 
       const { data } = await api.post(`/core/trips/${tripId}/stops`, payload);
-      setTrip(prev => ({
-        ...prev,
-        stops: [...(prev?.stops || []), data]
-      }));
+      setTrip(prev => {
+        if (prev?.stops?.some(s => s.id === data.id)) return prev;
+        return {
+          ...prev,
+          stops: [...(prev?.stops || []), data]
+        };
+      });
       setIsAddStopOpen(false);
       toast.success(`Added ${matchedCityObj?.name || 'stop'} to itinerary! 📍`);
     } catch (err) {
-      // Local fallback
       const chosenCity = cities.find(c => c.id === stopForm.cityId) || { 
         name: stopForm.cityName || 'New Destination Stop', 
         country: 'India' 
@@ -366,56 +424,127 @@ export default function ItineraryBuilder() {
         departureDate: stopForm.departureDate || trip?.endDate,
         activities: []
       };
-      setTrip(prev => ({
-        ...prev,
-        stops: [...(prev?.stops || []), localStop]
-      }));
+      setTrip(prev => {
+        if (prev?.stops?.some(s => s.city?.name === chosenCity.name)) return prev;
+        return {
+          ...prev,
+          stops: [...(prev?.stops || []), localStop]
+        };
+      });
       setIsAddStopOpen(false);
       toast.success('Destination stop added! 📍');
     }
   };
 
-  const handleAddActivity = async (e) => {
+  // Direct 1-Click Add for a Curated Activity
+  const handleAddCuratedActivity = async (sug) => {
+    if (!selectedStopId) return;
+
+    try {
+      const { data } = await api.post(`/core/trips/${tripId}/stops/${selectedStopId}/activities`, {
+        name: sug.name,
+        category: sug.category,
+        customCost: Number(sug.cost),
+        scheduledTime: new Date().toISOString()
+      });
+
+      setTrip(prev => ({
+        ...prev,
+        stops: prev.stops.map(s => {
+          if (s.id === selectedStopId) {
+            const currentActs = s.activities || [];
+            if (currentActs.some(a => a.id === data.id || a.activity?.name === sug.name)) return s;
+            return {
+              ...s,
+              activities: [...currentActs, data]
+            };
+          }
+          return s;
+        })
+      }));
+
+      setIsAddActivityOpen(false);
+      toast.success(`Added "${sug.name}"! ₹${sug.cost.toLocaleString('en-IN')} deducted from budget. 💸`);
+    } catch (err) {
+      const fallbackAct = {
+        id: `act-${Date.now()}`,
+        activity: { name: sug.name, category: sug.category, cost: sug.cost, durationMinutes: 90 },
+        customCost: sug.cost
+      };
+      setTrip(prev => ({
+        ...prev,
+        stops: prev.stops.map(s => {
+          if (s.id === selectedStopId) {
+            const currentActs = s.activities || [];
+            if (currentActs.some(a => a.activity?.name === sug.name)) return s;
+            return {
+              ...s,
+              activities: [...currentActs, fallbackAct]
+            };
+          }
+          return s;
+        })
+      }));
+      setIsAddActivityOpen(false);
+      toast.success(`Added "${sug.name}"! ₹${sug.cost.toLocaleString('en-IN')} deducted. 💸`);
+    }
+  };
+
+  const handleAddCustomActivity = async (e) => {
     e.preventDefault();
     if (!selectedStopId) return;
 
     const costNum = Number(activityForm.customCost) || 0;
 
-    const newAct = {
-      id: `act-${Date.now()}`,
-      activity: {
-        name: activityForm.name,
-        category: activityForm.category,
-        cost: costNum,
-        durationMinutes: 90
-      },
-      customCost: costNum,
-      scheduledTime: activityForm.scheduledTime || new Date().toISOString()
-    };
-
     try {
-      await api.post(`/core/trips/${tripId}/stops/${selectedStopId}/activities`, {
+      const { data } = await api.post(`/core/trips/${tripId}/stops/${selectedStopId}/activities`, {
         name: activityForm.name,
         category: activityForm.category,
         customCost: costNum,
-        scheduledTime: activityForm.scheduledTime
+        scheduledTime: activityForm.scheduledTime || new Date().toISOString()
       });
-    } catch (err) {
-      console.log('Saved to local state');
-    }
 
-    setTrip(prev => ({
-      ...prev,
-      stops: prev.stops.map(s => {
-        if (s.id === selectedStopId) {
-          return {
-            ...s,
-            activities: [...(s.activities || []), newAct]
-          };
-        }
-        return s;
-      })
-    }));
+      setTrip(prev => ({
+        ...prev,
+        stops: prev.stops.map(s => {
+          if (s.id === selectedStopId) {
+            const currentActs = s.activities || [];
+            if (currentActs.some(a => a.id === data.id || a.activity?.name === activityForm.name)) return s;
+            return {
+              ...s,
+              activities: [...currentActs, data]
+            };
+          }
+          return s;
+        })
+      }));
+    } catch (err) {
+      const localAct = {
+        id: `act-${Date.now()}`,
+        activity: {
+          name: activityForm.name,
+          category: activityForm.category,
+          cost: costNum,
+          durationMinutes: 90
+        },
+        customCost: costNum,
+        scheduledTime: activityForm.scheduledTime || new Date().toISOString()
+      };
+      setTrip(prev => ({
+        ...prev,
+        stops: prev.stops.map(s => {
+          if (s.id === selectedStopId) {
+            const currentActs = s.activities || [];
+            if (currentActs.some(a => a.activity?.name === activityForm.name)) return s;
+            return {
+              ...s,
+              activities: [...currentActs, localAct]
+            };
+          }
+          return s;
+        })
+      }));
+    }
 
     setIsAddActivityOpen(false);
     setActivityForm({
@@ -428,7 +557,12 @@ export default function ItineraryBuilder() {
     toast.success(`Activity added! ₹${costNum.toLocaleString('en-IN')} deducted from budget. 💸`);
   };
 
-  const handleDeleteActivity = (stopId, actId, actCost) => {
+  const handleDeleteActivity = async (stopId, actId, actCost) => {
+    try {
+      await api.delete(`/core/trips/${tripId}/stops/${stopId}/activities/${actId}`);
+    } catch (e) {
+      console.log('Deleted locally');
+    }
     setTrip(prev => ({
       ...prev,
       stops: prev.stops.map(s => {
@@ -530,6 +664,15 @@ export default function ItineraryBuilder() {
             <Share2 size={15} />
             <span>Share</span>
           </button>
+
+          {/* Delete Trip Action */}
+          <button
+            onClick={handleDeleteCurrentTrip}
+            className="p-2.5 text-slate-400 hover:text-rose-600 bg-white hover:bg-rose-50 border border-slate-200 hover:border-rose-200 rounded-xl transition cursor-pointer shadow-sm"
+            title="Delete this entire trip"
+          >
+            <Trash2 size={15} />
+          </button>
         </div>
       </div>
 
@@ -573,7 +716,6 @@ export default function ItineraryBuilder() {
 
           <button
             onClick={() => {
-              // Pre-select first nearby city
               if (nearbySuggestedPlaces.length > 0) {
                 const firstNearby = nearbySuggestedPlaces[0];
                 const matchedDb = cities.find(c => c.name.toLowerCase().includes(firstNearby.name.toLowerCase().split(' ')[0]));
@@ -681,7 +823,7 @@ export default function ItineraryBuilder() {
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden transition-all duration-300"
                 >
-                  {/* Stop City Header with Collapse Toggle */}
+                  {/* Stop City Header with Actions */}
                   <div className="bg-slate-50/90 p-6 px-8 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-center space-x-4">
                       <div className="w-12 h-12 rounded-2xl bg-sky-600 text-white font-extrabold flex items-center justify-center text-lg shadow-md shadow-sky-600/20 shrink-0">
@@ -707,6 +849,7 @@ export default function ItineraryBuilder() {
                       <button
                         onClick={() => {
                           setSelectedStopId(stop.id);
+                          setActivityModalTab('curated');
                           setIsAddActivityOpen(true);
                         }}
                         className="bg-white hover:bg-sky-50 text-sky-700 font-bold border border-sky-200 px-4 py-2.5 rounded-xl text-xs transition flex items-center space-x-1.5 shadow-sm cursor-pointer"
@@ -732,6 +875,15 @@ export default function ItineraryBuilder() {
                             <span className="hidden sm:inline">Collapse</span>
                           </>
                         )}
+                      </button>
+
+                      {/* Delete Stop (Hold) Action */}
+                      <button
+                        onClick={() => handleDeleteStop(stop.id)}
+                        className="p-2.5 text-slate-400 hover:text-rose-600 bg-white hover:bg-rose-50 border border-slate-200 hover:border-rose-200 rounded-xl transition cursor-pointer shadow-sm"
+                        title="Delete this destination stop"
+                      >
+                        <Trash2 size={15} />
                       </button>
                     </div>
                   </div>
@@ -775,14 +927,14 @@ export default function ItineraryBuilder() {
                                   </p>
                                 </div>
 
-                                <div className="flex items-center space-x-2">
+                                <div className="flex items-center space-x-3">
                                   <span className="text-xs text-slate-400 font-medium">Scheduled</span>
                                   <button
                                     onClick={() => handleDeleteActivity(stop.id, actItem.id, actItem.customCost || actItem.activity?.cost)}
-                                    className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg transition cursor-pointer"
+                                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
                                     title="Delete activity and restore budget"
                                   >
-                                    <Trash2 size={14} />
+                                    <Trash2 size={16} />
                                   </button>
                                 </div>
                               </div>
@@ -794,6 +946,7 @@ export default function ItineraryBuilder() {
                               <button
                                 onClick={() => {
                                   setSelectedStopId(stop.id);
+                                  setActivityModalTab('curated');
                                   setIsAddActivityOpen(true);
                                 }}
                                 className="text-xs font-bold text-sky-600 hover:text-sky-700 cursor-pointer"
@@ -876,7 +1029,7 @@ export default function ItineraryBuilder() {
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-100 p-8 z-10"
             >
               <button 
@@ -1015,7 +1168,7 @@ export default function ItineraryBuilder() {
         )}
       </AnimatePresence>
 
-      {/* Add Activity Modal with Smart City Recommendations */}
+      {/* Modern 2-Tab Assign Activity Modal */}
       <AnimatePresence>
         {isAddActivityOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -1031,7 +1184,7 @@ export default function ItineraryBuilder() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-100 p-8 z-10 max-h-[85vh] overflow-y-auto"
+              className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 sm:p-8 z-10 max-h-[90vh] flex flex-col"
             >
               <button 
                 onClick={() => setIsAddActivityOpen(false)}
@@ -1040,97 +1193,126 @@ export default function ItineraryBuilder() {
                 <X size={20} />
               </button>
 
-              <h3 className="text-2xl font-bold text-slate-900 mb-1">Assign Activity</h3>
-              <p className="text-xs text-slate-500 mb-5">
-                Suggested experiences for <span className="font-bold text-slate-800">{activeCityName}</span> (costs deduct from budget)
-              </p>
+              <div className="mb-4">
+                <h3 className="text-2xl font-bold text-slate-900 mb-1">Assign Activity</h3>
+                <p className="text-xs text-slate-500">
+                  Select experiences for <span className="font-bold text-slate-800">{activeCityName}</span> (costs deduct from budget)
+                </p>
+              </div>
 
-              {/* 1-Click Recommended Activities for This Stop */}
-              <div className="mb-6 space-y-2">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
-                  ✨ Curated for {activeCityName}:
-                </span>
-                <div className="grid grid-cols-1 gap-2">
+              {/* 2-Tab Switcher */}
+              <div className="flex bg-slate-100 p-1 rounded-2xl mb-4">
+                <button
+                  type="button"
+                  onClick={() => setActivityModalTab('curated')}
+                  className={`flex-1 py-2 rounded-xl text-xs font-bold transition ${
+                    activityModalTab === 'curated' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  ✨ Curated Experiences
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActivityModalTab('custom')}
+                  className={`flex-1 py-2 rounded-xl text-xs font-bold transition ${
+                    activityModalTab === 'custom' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  ✏️ Custom Activity
+                </button>
+              </div>
+
+              {/* Tab 1: Curated 1-Click Experiences */}
+              {activityModalTab === 'curated' ? (
+                <div className="overflow-y-auto space-y-2.5 flex-1 pr-1 max-h-[50vh]">
                   {suggestedActivitiesForActivePlace.map((sug, i) => (
                     <div
                       key={i}
-                      onClick={() => {
-                        setActivityForm({
-                          name: sug.name,
-                          category: sug.category,
-                          customCost: sug.cost,
-                          scheduledTime: '',
-                          activityId: ''
-                        });
-                        toast.success(`Selected "${sug.name}" (₹${sug.cost.toLocaleString('en-IN')})`);
-                      }}
-                      className="p-3 bg-slate-50 hover:bg-sky-50 border border-slate-100 hover:border-sky-300 rounded-2xl cursor-pointer transition flex items-center justify-between text-xs group"
+                      className="p-3.5 bg-slate-50 hover:bg-sky-50/60 border border-slate-100 hover:border-sky-300 rounded-2xl transition flex items-center justify-between gap-3 group"
                     >
-                      <div className="space-y-0.5">
-                        <span className="font-bold text-slate-800 group-hover:text-sky-700 block">{sug.name}</span>
-                        <span className="text-[10px] text-slate-400">{sug.category} • {sug.duration}</span>
+                      <div className="space-y-1 min-w-0">
+                        <div className="flex items-center space-x-2">
+                          <span className={`px-2 py-0.5 rounded-md text-[9px] font-bold border ${getCategoryColor(sug.category)}`}>
+                            {sug.category}
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-medium">{sug.duration}</span>
+                        </div>
+                        <h5 className="font-bold text-xs text-slate-900 group-hover:text-sky-800 leading-snug line-clamp-2">
+                          {sug.name}
+                        </h5>
+                        <span className="text-xs font-extrabold text-emerald-600 block">
+                          ₹{sug.cost.toLocaleString('en-IN')}
+                        </span>
                       </div>
-                      <span className="font-extrabold text-emerald-600 shrink-0 ml-2">₹{sug.cost.toLocaleString('en-IN')}</span>
+
+                      <button
+                        type="button"
+                        onClick={() => handleAddCuratedActivity(sug)}
+                        className="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-xl shadow-md shadow-sky-600/20 transition shrink-0 cursor-pointer"
+                      >
+                        + Add
+                      </button>
                     </div>
                   ))}
                 </div>
-              </div>
-
-              <form onSubmit={handleAddActivity} className="space-y-4 pt-3 border-t border-slate-100">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                    Activity Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={activityForm.name}
-                    onChange={(e) => setActivityForm({ ...activityForm, name: e.target.value })}
-                    placeholder="e.g. Sunset Houseboat Cruise & Candlelight Dinner"
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-900 text-sm font-medium"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
+              ) : (
+                /* Tab 2: Custom Activity Form */
+                <form onSubmit={handleAddCustomActivity} className="space-y-4 flex-1">
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                      Category
-                    </label>
-                    <select
-                      value={activityForm.category}
-                      onChange={(e) => setActivityForm({ ...activityForm, category: e.target.value })}
-                      className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium"
-                    >
-                      <option value="SIGHTSEEING">Sightseeing</option>
-                      <option value="FOOD">Food & Dining</option>
-                      <option value="ADVENTURE">Adventure</option>
-                      <option value="RELAXATION">Relaxation</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                      Cost (₹) *
+                      Activity Name *
                     </label>
                     <input
-                      type="number"
+                      type="text"
                       required
-                      value={activityForm.customCost}
-                      onChange={(e) => setActivityForm({ ...activityForm, customCost: e.target.value })}
-                      className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium"
+                      value={activityForm.name}
+                      onChange={(e) => setActivityForm({ ...activityForm, name: e.target.value })}
+                      placeholder="e.g. Sunset Houseboat Cruise & Dinner"
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-900 text-sm font-medium"
                     />
                   </div>
-                </div>
 
-                <div className="pt-3">
-                  <button
-                    type="submit"
-                    className="w-full py-3.5 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl shadow-lg shadow-sky-600/20 transition cursor-pointer"
-                  >
-                    Save Activity & Deduct From Budget
-                  </button>
-                </div>
-              </form>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Category
+                      </label>
+                      <select
+                        value={activityForm.category}
+                        onChange={(e) => setActivityForm({ ...activityForm, category: e.target.value })}
+                        className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium"
+                      >
+                        <option value="SIGHTSEEING">Sightseeing</option>
+                        <option value="FOOD">Food & Dining</option>
+                        <option value="ADVENTURE">Adventure</option>
+                        <option value="RELAXATION">Relaxation</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Cost (₹) *
+                      </label>
+                      <input
+                        type="number"
+                        required
+                        value={activityForm.customCost}
+                        onChange={(e) => setActivityForm({ ...activityForm, customCost: e.target.value })}
+                        className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-3">
+                    <button
+                      type="submit"
+                      className="w-full py-3.5 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl shadow-lg shadow-sky-600/20 transition cursor-pointer"
+                    >
+                      Save Activity & Deduct From Budget
+                    </button>
+                  </div>
+                </form>
+              )}
             </motion.div>
           </div>
         )}

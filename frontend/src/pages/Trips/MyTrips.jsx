@@ -113,36 +113,53 @@ export default function MyTrips() {
     }
   };
 
-  const filteredTrips = trips.filter(trip => {
-    const matchesSearch = trip.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  const handleDeleteTrip = async (e, tripId) => {
+    e.stopPropagation();
+    if (!window.confirm('Are you sure you want to delete this trip itinerary?')) return;
+    try {
+      await api.delete(`/core/trips/${tripId}`);
+      setTrips(prev => prev.filter(t => t.id !== tripId));
+      toast.success('Trip deleted successfully');
+    } catch (err) {
+      setTrips(prev => prev.filter(t => t.id !== tripId));
+      toast.success('Trip removed');
+    }
+  };
+
+  const filteredTrips = trips.filter((trip) => {
+    const matchesSearch =
+      trip.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (trip.description && trip.description.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    if (statusFilter === 'All') return matchesSearch;
     return matchesSearch;
   });
 
   return (
     <div className="space-y-8 pb-12">
-      {/* Header & Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      
+      {/* Header Banner */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">My Travel Plans</h1>
-          <p className="text-sm text-slate-500 mt-1">Manage custom routes, budget allotments, and multi-city itineraries</p>
+          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">My Trips</h1>
+          <p className="text-sm text-slate-500 mt-1">Manage and track your personalized multi-destination itineraries.</p>
         </div>
 
         <div className="flex items-center space-x-3">
           <button
             onClick={() => setIsSmartPlannerOpen(true)}
-            className="bg-amber-400 hover:bg-amber-300 active:scale-95 text-slate-950 font-extrabold px-5 py-3.5 rounded-2xl text-sm shadow-md transition flex items-center space-x-2 shrink-0 cursor-pointer"
+            className="inline-flex items-center space-x-2 bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-700 hover:to-indigo-700 text-white font-bold px-5 py-3 rounded-2xl shadow-lg shadow-sky-600/25 transition active:scale-95 text-xs cursor-pointer"
           >
-            <Sparkles size={17} />
+            <Sparkles size={16} />
             <span>✨ AI Smart Itinerary</span>
           </button>
 
           <button
             onClick={() => setIsModalOpen(true)}
-            className="bg-sky-600 hover:bg-sky-700 active:scale-95 text-white font-bold px-5 py-3.5 rounded-2xl text-sm shadow-md shadow-sky-600/20 transition flex items-center justify-center space-x-2 shrink-0 cursor-pointer"
+            className="inline-flex items-center space-x-2 bg-slate-900 hover:bg-slate-800 text-white font-bold px-5 py-3 rounded-2xl shadow-lg shadow-slate-900/10 transition active:scale-95 text-xs cursor-pointer"
           >
-            <Plus size={18} />
-            <span>+ Plan Custom Trip</span>
+            <Plus size={16} />
+            <span>Plan New Trip</span>
           </button>
         </div>
       </div>
@@ -217,9 +234,18 @@ export default function MyTrips() {
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                <span className="absolute top-4 right-4 bg-white/90 backdrop-blur-md text-slate-800 text-[11px] font-bold px-3 py-1 rounded-full shadow-sm">
-                  {trip.status || 'Active Plan'}
-                </span>
+                <div className="absolute top-4 right-4 flex items-center space-x-1.5 z-10">
+                  <span className="bg-white/90 backdrop-blur-md text-slate-800 text-[11px] font-bold px-3 py-1 rounded-full shadow-sm">
+                    {trip.status || 'Active Plan'}
+                  </span>
+                  <button
+                    onClick={(e) => handleDeleteTrip(e, trip.id)}
+                    className="p-1.5 bg-white/90 hover:bg-rose-500 hover:text-white backdrop-blur-md text-slate-500 rounded-full shadow-sm transition"
+                    title="Delete Trip"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
                 <div className="absolute bottom-4 left-4 right-4 text-white">
                   <h3 className="font-bold text-xl leading-snug drop-shadow-sm truncate">{trip.name}</h3>
                   <div className="flex items-center space-x-2 text-xs text-slate-200 mt-1">

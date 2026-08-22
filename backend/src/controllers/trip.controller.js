@@ -213,6 +213,35 @@ export const addStopActivity = async (req, res) => {
   }
 };
 
+export const deleteStop = async (req, res) => {
+  try {
+    const { id: tripId, stopId } = req.params;
+    await prisma.stopActivity.deleteMany({ where: { tripStopId: stopId } });
+    await prisma.tripStop.delete({ where: { id: stopId } });
+    try {
+      getIO().to(tripId).emit('stop_deleted', stopId);
+    } catch (socketErr) {}
+    res.json({ message: 'Stop deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting stop:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const deleteStopActivity = async (req, res) => {
+  try {
+    const { id: tripId, stopId, activityId } = req.params;
+    await prisma.stopActivity.delete({ where: { id: activityId } });
+    try {
+      getIO().to(tripId).emit('activity_deleted', { stopId, activityId });
+    } catch (socketErr) {}
+    res.json({ message: 'Activity deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting activity:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export const getPublicTrip = async (req, res) => {
   try {
     const { shareSlug } = req.params;
