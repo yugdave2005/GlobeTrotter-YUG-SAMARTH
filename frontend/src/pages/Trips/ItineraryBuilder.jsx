@@ -6,12 +6,13 @@ import {
   Trash2, ChevronLeft, Sparkles, Check, Copy,
   List, Calendar as CalendarIcon, Compass, X, Wallet, Edit2,
   ChevronDown, ChevronUp, AlertCircle, CheckCircle2, TrendingUp,
-  Navigation, ArrowRight
+  Navigation, ArrowRight, Map as MapIcon, FileDown, Printer
 } from 'lucide-react';
 import api from '../../utils/api';
 import { useSocket } from '../../context/SocketContext';
 import toast from 'react-hot-toast';
 import ConfirmDeleteModal from '../../components/ConfirmDeleteModal';
+import TripRouteMap from '../../components/TripRouteMap';
 
 // Curated dictionary of nearby destinations by region / hub
 const NEARBY_REGIONS = [
@@ -760,11 +761,11 @@ export default function ItineraryBuilder() {
           <span>Back to My Trips</span>
         </button>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <div className="bg-white p-1 rounded-2xl border border-slate-100 shadow-sm flex items-center">
             <button
               onClick={() => setViewMode('timeline')}
-              className={`flex items-center space-x-1 px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+              className={`flex items-center space-x-1 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
                 viewMode === 'timeline'
                   ? 'bg-slate-900 text-white shadow-sm'
                   : 'text-slate-500 hover:text-slate-900'
@@ -775,7 +776,7 @@ export default function ItineraryBuilder() {
             </button>
             <button
               onClick={() => setViewMode('calendar')}
-              className={`flex items-center space-x-1 px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+              className={`flex items-center space-x-1 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
                 viewMode === 'calendar'
                   ? 'bg-slate-900 text-white shadow-sm'
                   : 'text-slate-500 hover:text-slate-900'
@@ -784,11 +785,32 @@ export default function ItineraryBuilder() {
               <CalendarIcon size={14} />
               <span>Calendar</span>
             </button>
+            <button
+              onClick={() => setViewMode('map')}
+              className={`flex items-center space-x-1 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                viewMode === 'map'
+                  ? 'bg-sky-600 text-white shadow-sm'
+                  : 'text-slate-500 hover:text-slate-900'
+              }`}
+            >
+              <MapIcon size={14} />
+              <span>🗺️ Route Map</span>
+            </button>
           </div>
+
+          {/* Download PDF Button */}
+          <button
+            onClick={() => window.print()}
+            className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-sm shadow-emerald-600/20 transition flex items-center space-x-1.5 cursor-pointer"
+            title="Download and print formatted PDF itinerary"
+          >
+            <FileDown size={15} />
+            <span>Download PDF</span>
+          </button>
 
           <button
             onClick={() => setIsShareModalOpen(true)}
-            className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 text-xs font-bold px-4 py-2.5 rounded-xl shadow-sm transition flex items-center space-x-1.5 cursor-pointer"
+            className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-sm transition flex items-center space-x-1.5 cursor-pointer"
           >
             <Share2 size={15} />
             <span>Share</span>
@@ -1132,7 +1154,7 @@ export default function ItineraryBuilder() {
             </div>
           )}
         </div>
-      ) : (
+      ) : viewMode === 'calendar' ? (
         /* Calendar View */
         <div className="bg-white rounded-3xl border border-slate-100 p-8 shadow-sm space-y-6">
           <div className="flex items-center justify-between">
@@ -1161,7 +1183,75 @@ export default function ItineraryBuilder() {
             ))}
           </div>
         </div>
+      ) : (
+        /* 🗺️ Route Map View */
+        <TripRouteMap trip={trip} />
       )}
+
+      {/* 📄 Print-Only Optimized PDF Document Layout */}
+      <div className="hidden print-only p-8 text-black space-y-6">
+        <div className="border-b-2 border-slate-800 pb-4 flex justify-between items-end">
+          <div>
+            <h1 className="text-3xl font-extrabold">{trip?.name}</h1>
+            <p className="text-sm text-slate-600 mt-1">{trip?.description}</p>
+            <p className="text-xs text-slate-500 mt-1">
+              Dates: {new Date(trip?.startDate).toLocaleDateString()} to {new Date(trip?.endDate).toLocaleDateString()}
+            </p>
+          </div>
+          <div className="text-right">
+            <span className="text-xs font-bold uppercase text-slate-500 block">Planned Budget</span>
+            <span className="text-xl font-bold">₹{tripBudget.toLocaleString('en-IN')}</span>
+            <p className="text-xs text-slate-500">Activities Total: ₹{totalCost.toLocaleString('en-IN')}</p>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <h2 className="text-lg font-bold uppercase tracking-wider text-slate-700">Detailed Stop-by-Stop Itinerary</h2>
+          {trip?.stops?.map((stop, sIdx) => (
+            <div key={sIdx} className="border border-slate-300 rounded-xl p-4 space-y-3">
+              <div className="flex justify-between items-center border-b border-slate-200 pb-2">
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Stop {sIdx + 1}: {stop.city?.name}</h3>
+                  <span className="text-xs text-slate-500">{new Date(stop.arrivalDate).toLocaleDateString()} – {new Date(stop.departureDate).toLocaleDateString()}</span>
+                </div>
+                <span className="text-xs font-semibold bg-slate-100 px-2.5 py-1 rounded">
+                  {stop.activities?.length || 0} Scheduled Activities
+                </span>
+              </div>
+
+              {stop.activities && stop.activities.length > 0 ? (
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-slate-600">
+                      <th className="py-1.5 font-bold">Activity Name</th>
+                      <th className="py-1.5 font-bold">Category</th>
+                      <th className="py-1.5 font-bold">Duration</th>
+                      <th className="py-1.5 font-bold text-right">Cost (₹)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {stop.activities.map((a, aIdx) => (
+                      <tr key={aIdx}>
+                        <td className="py-1.5 font-medium">{a.activity?.name}</td>
+                        <td className="py-1.5 text-slate-500">{a.activity?.category || 'ACTIVITY'}</td>
+                        <td className="py-1.5 text-slate-500">{a.activity?.durationMinutes || 90} mins</td>
+                        <td className="py-1.5 font-bold text-right">₹{(a.customCost || a.activity?.cost || 0).toLocaleString('en-IN')}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <p className="text-xs text-slate-400 italic">No scheduled activities for this stop.</p>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="pt-6 border-t border-slate-300 flex justify-between text-xs text-slate-500">
+          <span>Generated by GlobeTrotter Travel Planner</span>
+          <span>Printed on {new Date().toLocaleDateString()}</span>
+        </div>
+      </div>
 
       {/* Add Stop Modal with Validation Feedback & Date Range Guardrails */}
       <AnimatePresence>

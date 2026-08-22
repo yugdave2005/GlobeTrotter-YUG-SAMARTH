@@ -184,18 +184,45 @@ export default function BudgetTracker() {
     }
   }, [selectedTripId, tripBudgetCalculations]);
 
-  // Expenses to display in ledger
-  const displayedExpenses = useMemo(() => {
-    if (selectedTripId === 'all') return expenses;
-    const active = trips.find(t => t.id === selectedTripId);
-    return expenses.filter(e => e.tripId === selectedTripId || (active && e.tripName === active.name));
-  }, [expenses, selectedTripId, trips]);
+  // Expenses and Activities combined to display in ledger
+  const displayedItems = useMemo(() => {
+    const relevantTrips = selectedTripId === 'all' 
+      ? trips 
+      : trips.filter(t => t.id === selectedTripId);
+
+    const activityItems = [];
+    relevantTrips.forEach(t => {
+      t.stops?.forEach((s, sIdx) => {
+        s.activities?.forEach((a, aIdx) => {
+          const cost = a.customCost !== undefined && a.customCost !== null ? Number(a.customCost) : Number(a.activity?.cost || 0);
+          activityItems.push({
+            id: `act-log-${a.id || `${t.id}-${sIdx}-${aIdx}`}`,
+            tripId: t.id,
+            tripName: t.name,
+            cityName: s.city?.name || 'Stop',
+            category: a.activity?.category || 'ACTIVITIES',
+            amount: cost,
+            description: `${a.activity?.name || 'Itinerary Activity'} (${s.city?.name || 'Destination'})`,
+            date: (s.arrivalDate ? s.arrivalDate.split('T')[0] : (t.startDate ? t.startDate.split('T')[0] : '2026-08-22')),
+            isActivity: true
+          });
+        });
+      });
+    });
+
+    const manualExpenses = (selectedTripId === 'all'
+      ? expenses
+      : expenses.filter(e => e.tripId === selectedTripId || (currentTrip && e.tripName === currentTrip.name))
+    ).map(e => ({ ...e, isActivity: false }));
+
+    return [...activityItems, ...manualExpenses].sort((a, b) => new Date(b.date) - new Date(a.date));
+  }, [trips, selectedTripId, expenses, currentTrip]);
 
   // Categories breakdown
   const categoryTotals = useMemo(() => {
     const totals = { TRANSPORT: 0, STAY: 0, MEALS: 0, ACTIVITIES: 0, MISC: 0 };
     
-    // Add activities from trip stops if specific trip or all
+    // Add activities from trip stops
     if (selectedTripId === 'all') {
       tripBudgetCalculations.forEach(t => {
         totals.ACTIVITIES += t.activityCost;
@@ -205,13 +232,18 @@ export default function BudgetTracker() {
       if (active) totals.ACTIVITIES += active.activityCost;
     }
 
-    displayedExpenses.forEach(exp => {
+    // Add manual expenses
+    const activeManual = selectedTripId === 'all' 
+      ? expenses 
+      : expenses.filter(e => e.tripId === selectedTripId || (currentTrip && e.tripName === currentTrip.name));
+
+    activeManual.forEach(exp => {
       const cat = exp.category || 'MISC';
       totals[cat] = (totals[cat] || 0) + Number(exp.amount);
     });
 
     return totals;
-  }, [displayedExpenses, selectedTripId, tripBudgetCalculations]);
+  }, [selectedTripId, tripBudgetCalculations, expenses, currentTrip]);
 
   const handleAddExpense = (e) => {
     e.preventDefault();
@@ -497,10 +529,10 @@ export default function BudgetTracker() {
         </div>
 
         <div className="divide-y divide-slate-100 overflow-x-auto">
-          {displayedExpenses.length === 0 ? (
+          {displayedItems.length === 0 ? (
             <div className="p-12 text-center text-slate-400 space-y-2">
               <Wallet size={32} className="mx-auto text-slate-300" />
-              <p className="text-sm font-semibold">No expense logs found for this trip.</p>
+              <p className="text-sm font-semibold">No planned activities or expense logs found for this trip.</p>
               <button
                 onClick={() => setIsModalOpen(true)}
                 className="text-xs text-sky-600 font-bold hover:underline cursor-pointer"
@@ -509,33 +541,42 @@ export default function BudgetTracker() {
               </button>
             </div>
           ) : (
-            displayedExpenses.map((exp) => (
-              <div key={exp.id} className="p-5 px-8 flex items-center justify-between gap-4 hover:bg-slate-50/50 transition">
+            displayedItems.map((item) => (
+              <div key={item.id} className="p-5 px-8 flex items-center justify-between gap-4 hover:bg-slate-50/50 transition">
                 <div className="flex items-center space-x-4 min-w-0">
-                  <span className={`px-2.5 py-1 rounded-xl text-[10px] font-bold border shrink-0 ${getCategoryBadge(exp.category)}`}>
-                    {exp.category}
+                  <span className={`px-2.5 py-1 rounded-xl text-[10px] font-bold border shrink-0 ${getCategoryBadge(item.category)}`}>
+                    {item.category}
                   </span>
                   <div className="min-w-0">
-                    <h4 className="font-bold text-sm text-slate-900 truncate">{exp.description}</h4>
+                    <div className="flex items-center space-x-2">
+                      <h4 className="font-bold text-sm text-slate-900 truncate">{item.description}</h4>
+                      {item.isActivity && (
+                        <span className="bg-sky-50 text-sky-700 text-[10px] font-bold px-2 py-0.5 rounded-md border border-sky-200">
+                          ✨ Scheduled Activity
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-slate-400 flex items-center space-x-2 mt-0.5">
-                      <span>{exp.tripName}</span>
+                      <span>{item.tripName}</span>
                       <span>•</span>
-                      <span>{exp.date}</span>
+                      <span>{item.date}</span>
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center space-x-4 shrink-0">
                   <span className="font-extrabold text-sm text-slate-900">
-                    ₹{Number(exp.amount).toLocaleString('en-IN')}
+                    ₹{Number(item.amount).toLocaleString('en-IN')}
                   </span>
-                  <button
-                    onClick={() => requestDeleteExpense(exp.id)}
-                    className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition cursor-pointer"
-                    title="Delete expense entry"
-                  >
-                    <Trash2 size={15} />
-                  </button>
+                  {!item.isActivity && (
+                    <button
+                      onClick={() => requestDeleteExpense(item.id)}
+                      className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition cursor-pointer"
+                      title="Delete expense entry"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  )}
                 </div>
               </div>
             ))

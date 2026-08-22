@@ -43,3 +43,22 @@ body {
   background: #94a3b8;
 }
 
+@import "leaflet/dist/leaflet.css";
+
+/* Print / PDF Export Optimization */
+@media print {
+  body {
+    background-color: white !important;
+    color: black !important;
+  }
+  aside, nav, header, button, .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  .page-break {
+    page-break-after: always;
+  }
+}
+

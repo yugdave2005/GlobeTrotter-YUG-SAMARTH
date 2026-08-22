@@ -72,7 +72,15 @@ export const getMyTrips = async (req, res) => {
   try {
     const trips = await prisma.trip.findMany({
       where: { userId: req.user.id },
-      include: { stops: { include: { city: true } } },
+      include: { 
+        stops: { 
+          include: { 
+            city: true,
+            activities: { include: { activity: true } }
+          },
+          orderBy: { sortOrder: 'asc' }
+        } 
+      },
       orderBy: { startDate: 'asc' }
     });
     res.json(trips);
