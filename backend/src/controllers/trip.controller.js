@@ -1,4 +1,5 @@
 import prisma from '../utils/prisma.js';
+import { getIO } from '../utils/socket.js';
 
 export const createTrip = async (req, res) => {
   try {
@@ -74,6 +75,8 @@ export const addStop = async (req, res) => {
         sortOrder
       }
     });
+
+    getIO().to(tripId).emit('stop_added', stop);
     res.status(201).json(stop);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -83,7 +86,7 @@ export const addStop = async (req, res) => {
 export const addStopActivity = async (req, res) => {
   try {
     const { activityId, scheduledTime, customCost } = req.body;
-    const { stopId } = req.params;
+    const { id: tripId, stopId } = req.params;
     
     const stopActivity = await prisma.stopActivity.create({
       data: {
@@ -93,6 +96,8 @@ export const addStopActivity = async (req, res) => {
         customCost
       }
     });
+
+    getIO().to(tripId).emit('activity_added', { stopId, stopActivity });
     res.status(201).json(stopActivity);
   } catch (error) {
     res.status(500).json({ message: error.message });

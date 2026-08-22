@@ -1,4 +1,5 @@
 import prisma from '../utils/prisma.js';
+import { getIO } from '../utils/socket.js';
 
 export const addExpense = async (req, res) => {
   try {
@@ -14,6 +15,10 @@ export const addExpense = async (req, res) => {
         description
       }
     });
+
+    // Notify clients in the trip room that an expense was added
+    getIO().to(tripId).emit('expense_added', expense);
+
     res.status(201).json(expense);
   } catch (error) {
     res.status(500).json({ message: error.message });

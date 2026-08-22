@@ -8,7 +8,7 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export const register = async (req, res) => {
   try {
-    const { email, password, name } = req.body;
+    const { email, password, name, preferences } = req.body;
     
     let user = await prisma.user.findUnique({ where: { email } });
     if (user) return res.status(400).json({ message: 'User already exists' });
@@ -17,11 +17,26 @@ export const register = async (req, res) => {
     const passwordHash = await bcrypt.hash(password, salt);
     
     user = await prisma.user.create({
-      data: { email, passwordHash, name }
+      data: { 
+        email, 
+        passwordHash, 
+        name,
+        preferences: preferences ? {
+          create: {
+            interests: preferences.interests || [],
+            travelStyle: preferences.travelStyle || 'Balanced',
+            travelPace: preferences.travelPace || 'Balanced',
+            budget: preferences.budget || 'Moderate',
+            companions: preferences.companions || 'Solo',
+            priorities: preferences.priorities || []
+          }
+        } : undefined
+      },
+      include: { preferences: true }
     });
     
     const token = generateToken(user.id);
-    res.status(201).json({ user: { id: user.id, email: user.email, name: user.name }, token });
+    res.status(201).json({ user: { id: user.id, email: user.email, name: user.name, preferences: user.preferences }, token });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -30,7 +45,10 @@ export const register = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({ 
+      where: { email },
+      include: { preferences: true }
+    });
     
     if (!user || !user.passwordHash) {
       return res.status(401).json({ message: 'Invalid credentials' });
@@ -40,7 +58,7 @@ export const login = async (req, res) => {
     if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
     
     const token = generateToken(user.id);
-    res.json({ user: { id: user.id, email: user.email, name: user.name }, token });
+    res.json({ user: { id: user.id, email: user.email, name: user.name, preferences: user.preferences }, token });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -48,7 +66,7 @@ export const login = async (req, res) => {
 
 export const googleAuth = async (req, res) => {
   try {
-    const { token } = req.body;
+    const { token, preferences } = req.body;
     const ticket = await googleClient.verifyIdToken({
       idToken: token,
       audience: process.env.GOOGLE_CLIENT_ID,
@@ -56,21 +74,41 @@ export const googleAuth = async (req, res) => {
     const payload = ticket.getPayload();
     const { email, name, sub: googleId, picture } = payload;
     
-    let user = await prisma.user.findUnique({ where: { email } });
+    let user = await prisma.user.findUnique({ 
+      where: { email },
+      include: { preferences: true }
+    });
     
     if (!user) {
       user = await prisma.user.create({
-        data: { email, name, googleId, photoUrl: picture }
+        data: { 
+          email, 
+          name, 
+          googleId, 
+          photoUrl: picture,
+          preferences: preferences ? {
+            create: {
+              interests: preferences.interests || [],
+              travelStyle: preferences.travelStyle || 'Balanced',
+              travelPace: preferences.travelPace || 'Balanced',
+              budget: preferences.budget || 'Moderate',
+              companions: preferences.companions || 'Solo',
+              priorities: preferences.priorities || []
+            }
+          } : undefined
+        },
+        include: { preferences: true }
       });
     } else if (!user.googleId) {
       user = await prisma.user.update({
         where: { email },
-        data: { googleId, photoUrl: user.photoUrl || picture }
+        data: { googleId, photoUrl: user.photoUrl || picture },
+        include: { preferences: true }
       });
     }
     
     const jwtToken = generateToken(user.id);
-    res.json({ user: { id: user.id, email: user.email, name: user.name }, token: jwtToken });
+    res.json({ user: { id: user.id, email: user.email, name: user.name, preferences: user.preferences }, token: jwtToken });
   } catch (error) {
     res.status(401).json({ message: 'Google Auth Failed', error: error.message });
   }

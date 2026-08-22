@@ -22,8 +22,24 @@ model User {
   
   savedDestinations   SavedDestination[]
   trips               Trip[]
+  preferences         TravelPreference?
 
   @@map("users")
+}
+
+model TravelPreference {
+  id              String   @id @default(uuid())
+  userId          String   @unique @map("user_id")
+  interests       String[]
+  travelStyle     String   @map("travel_style")
+  travelPace      String   @map("travel_pace")
+  budget          String
+  companions      String
+  priorities      String[]
+  
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("travel_preferences")
 }
 
 enum Role {
